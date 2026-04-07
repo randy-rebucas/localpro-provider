@@ -14,24 +14,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getJobs, type Job } from '@/api/jobs';
+import { AppHeader } from '@/components/app-header';
+import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const CATEGORIES = ['All', 'Electrical', 'Plumbing', 'Carpentry', 'Painting', 'Cleaning', 'HVAC', 'Other'];
 
+const TAG_COLOR: Record<string, { color: string; bg: string }> = {
+  PESO:      { color: Status.info,    bg: Status.infoBg },
+  LGU:       { color: Status.success, bg: Status.successBg },
+  Emergency: { color: Status.error,   bg: Status.errorBg },
+};
+
 function TagChip({ tag }: { tag: string }) {
-  const color =
-    tag === 'PESO'      ? Status.info :
-    tag === 'LGU'       ? Status.success :
-    tag === 'Emergency' ? Status.error : Status.warning;
-  const bg =
-    tag === 'PESO'      ? Status.infoBg :
-    tag === 'LGU'       ? Status.successBg :
-    tag === 'Emergency' ? Status.errorBg : Status.warningBg;
+  const c = TAG_COLOR[tag] ?? { color: Status.warning, bg: Status.warningBg };
   return (
-    <View style={[styles.tagChip, { backgroundColor: bg }]}>
-      <Text style={[styles.tagText, { color }]}>{tag}</Text>
+    <View style={[styles.tagChip, { backgroundColor: c.bg }]}>
+      <Text style={[styles.tagText, { color: c.color }]}>{tag}</Text>
     </View>
   );
 }
@@ -41,8 +42,9 @@ function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
   return (
     <Pressable style={[styles.card, { backgroundColor: theme.backgroundElement }]} onPress={onPress}>
       {job.isPriority && (
-        <View style={styles.priorityBadge}>
-          <Text style={styles.priorityText}>⭐ Priority</Text>
+        <View style={[styles.priorityBadge, { backgroundColor: '#FEF3C7' }]}>
+          <Icon name="star" size={12} color="#D97706" />
+          <Text style={styles.priorityText}>Priority</Text>
         </View>
       )}
 
@@ -56,9 +58,13 @@ function JobCard({ job, onPress }: { job: Job; onPress: () => void }) {
       </View>
 
       <Text style={[styles.category, { color: theme.textSecondary }]}>{job.category}</Text>
-      <Text style={[styles.location, { color: theme.textSecondary }]} numberOfLines={1}>
-        📍 {job.location}
-      </Text>
+
+      <View style={styles.locationRow}>
+        <Icon name="location-outline" size={13} color={theme.textSecondary} />
+        <Text style={[styles.location, { color: theme.textSecondary }]} numberOfLines={1}>
+          {job.location}
+        </Text>
+      </View>
 
       {job.jobTags.length > 0 && (
         <View style={styles.tagRow}>
@@ -92,31 +98,32 @@ export default function MarketplaceScreen() {
 
   const jobs: Job[] = Array.isArray(rawJobs) ? rawJobs : [];
 
-  const filtered = jobs.filter((j) =>
-    j.title.toLowerCase().includes(search.toLowerCase()) ||
-    j.location.toLowerCase().includes(search.toLowerCase()),
+  const filtered = jobs.filter(
+    (j) =>
+      j.title.toLowerCase().includes(search.toLowerCase()) ||
+      j.location.toLowerCase().includes(search.toLowerCase()),
   );
-
   const sorted = [...filtered].sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0));
+
+  const aiToggle = (
+    <Pressable
+      style={[styles.aiToggle, { backgroundColor: aiRank ? Primary[500] : theme.backgroundElement }]}
+      onPress={() => setAiRank((v) => !v)}
+    >
+      <Icon name="sparkles" size={14} color={aiRank ? '#fff' : theme.textSecondary} />
+      <Text style={[styles.aiToggleText, { color: aiRank ? '#fff' : theme.textSecondary }]}>
+        AI Rank
+      </Text>
+    </Pressable>
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.heading, { color: theme.text }]}>Marketplace</Text>
-        <Pressable
-          style={[styles.aiToggle, { backgroundColor: aiRank ? Primary[500] : theme.backgroundElement }]}
-          onPress={() => setAiRank((v) => !v)}
-        >
-          <Text style={[styles.aiToggleText, { color: aiRank ? '#fff' : theme.textSecondary }]}>
-            ✨ AI Rank
-          </Text>
-        </Pressable>
-      </View>
+      <AppHeader title="Marketplace" right={aiToggle} />
 
       {/* Search */}
       <View style={[styles.searchWrap, { backgroundColor: theme.backgroundElement }]}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Icon name="search-outline" size={16} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
           placeholder="Search jobs or location…"
@@ -167,7 +174,7 @@ export default function MarketplaceScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>📭</Text>
+              <Icon name="search-outline" size={48} color={theme.textSecondary} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>No open jobs</Text>
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                 Pull to refresh or try a different category.
@@ -182,16 +189,7 @@ export default function MarketplaceScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.two,
-  },
-  heading: { fontSize: 24, fontWeight: '700' },
-  aiToggle: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  aiToggle: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 4 },
   aiToggleText: { fontSize: 13, fontWeight: '600' },
   searchWrap: {
     flexDirection: 'row',
@@ -200,34 +198,36 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: Spacing.three,
     marginBottom: Spacing.two,
+    gap: Spacing.two,
   },
-  searchIcon: { fontSize: 16, marginRight: Spacing.two },
   searchInput: { flex: 1, fontSize: 15, paddingVertical: Spacing.two + 2 },
   categories: { paddingHorizontal: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.two },
   catChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   catText: { fontSize: 13, fontWeight: '500' },
-  list: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 32 },
+  list: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset },
   skeletons: { padding: Spacing.four, gap: Spacing.three },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
   priorityBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FEF3C7',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   priorityText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: Spacing.two },
   cardTitle: { flex: 1, fontSize: 16, fontWeight: '700', lineHeight: 22 },
   budget: { fontSize: 16, fontWeight: '700' },
   category: { fontSize: 13 },
-  location: { fontSize: 13 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  location: { fontSize: 13, flex: 1 },
   tagRow: { flexDirection: 'row', gap: Spacing.one, flexWrap: 'wrap' },
   tagChip: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 2 },
   tagText: { fontSize: 11, fontWeight: '700' },
   dateText: { fontSize: 12 },
   empty: { alignItems: 'center', paddingTop: 60, gap: Spacing.two },
-  emptyEmoji: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptyText: { fontSize: 14, textAlign: 'center' },
 });

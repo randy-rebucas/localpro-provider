@@ -1,17 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getJob } from '@/api/jobs';
 import { getQuotedJobIds } from '@/api/quotes';
+import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -25,7 +19,6 @@ export default function QuotesScreen() {
     queryFn: getQuotedJobIds,
   });
 
-  // Fetch job details for each quoted job ID
   const { data: quotedJobs = [], isLoading: jobsLoading } = useQuery({
     queryKey: ['quoted-jobs', jobIds],
     queryFn: async () => {
@@ -54,9 +47,7 @@ export default function QuotesScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
           renderItem={({ item }) => (
             <Pressable
               style={[styles.row, { backgroundColor: theme.backgroundElement }]}
@@ -66,9 +57,12 @@ export default function QuotesScreen() {
                 <Text style={[styles.rowTitle, { color: theme.text }]} numberOfLines={2}>
                   {item.title}
                 </Text>
-                <Text style={[styles.rowMeta, { color: theme.textSecondary }]} numberOfLines={1}>
-                  📍 {item.location}
-                </Text>
+                <View style={styles.locationRow}>
+                  <Icon name="location-outline" size={12} color={theme.textSecondary} />
+                  <Text style={[styles.rowMeta, { color: theme.textSecondary }]} numberOfLines={1}>
+                    {item.location}
+                  </Text>
+                </View>
                 <Text style={[styles.rowDate, { color: theme.textSecondary }]}>
                   {new Date(item.createdAt).toLocaleDateString()}
                 </Text>
@@ -78,20 +72,22 @@ export default function QuotesScreen() {
                   ₱{item.budget.toLocaleString()}
                 </Text>
                 <View style={[styles.quotedBadge, { backgroundColor: Primary[50] }]}>
-                  <Text style={[styles.quotedText, { color: Primary[600] }]}>Quoted ✓</Text>
+                  <Icon name="checkmark" size={11} color={Primary[600]} />
+                  <Text style={[styles.quotedText, { color: Primary[600] }]}>Quoted</Text>
                 </View>
               </View>
             </Pressable>
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>📝</Text>
+              <Icon name="document-text-outline" size={48} color={theme.textSecondary} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>No quotes yet</Text>
               <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
                 Jobs you quote on will appear here.
               </Text>
-              <Pressable onPress={() => router.push('/(app)/marketplace')}>
-                <Text style={[styles.emptyLink, { color: Primary[500] }]}>Browse open jobs →</Text>
+              <Pressable style={styles.emptyLinkRow} onPress={() => router.push('/(app)/marketplace')}>
+                <Text style={[styles.emptyLink, { color: Primary[500] }]}>Browse open jobs</Text>
+                <Icon name="arrow-forward" size={14} color={Primary[500]} />
               </Pressable>
             </View>
           }
@@ -109,15 +105,16 @@ const styles = StyleSheet.create({
   row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', gap: Spacing.two },
   rowMain: { flex: 1, gap: 4 },
   rowTitle: { fontSize: 15, fontWeight: '600', lineHeight: 20 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   rowMeta: { fontSize: 13 },
   rowDate: { fontSize: 12 },
   rowRight: { alignItems: 'flex-end', gap: 6 },
   amount: { fontSize: 15, fontWeight: '700' },
-  quotedBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  quotedBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 3 },
   quotedText: { fontSize: 11, fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60, gap: Spacing.two },
-  emptyEmoji: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptySubtitle: { fontSize: 14, textAlign: 'center' },
+  emptyLinkRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   emptyLink: { fontSize: 14, fontWeight: '600' },
 });

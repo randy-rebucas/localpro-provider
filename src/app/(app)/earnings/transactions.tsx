@@ -4,15 +4,16 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getTransactions } from '@/api/earnings';
+import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-const TX_ICONS: Record<string, string> = {
-  escrow_released: '💰',
-  commission:      '📊',
-  withdrawal:      '🏦',
-  referral_bonus:  '🎁',
+const TX_ICONS: Record<string, IconName> = {
+  escrow_released: 'cash-outline',
+  commission:      'bar-chart-outline',
+  withdrawal:      'business-outline',
+  referral_bonus:  'gift-outline',
 };
 
 export default function TransactionsScreen() {
@@ -29,8 +30,9 @@ export default function TransactionsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.nav}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text }]}>Transactions</Text>
         <View style={{ width: 60 }} />
@@ -46,12 +48,14 @@ export default function TransactionsScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
           renderItem={({ item }) => (
             <View style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
-              <Text style={styles.icon}>{TX_ICONS[item.type] ?? '💳'}</Text>
+              <Icon
+                name={TX_ICONS[item.type] ?? 'card-outline'}
+                size={22}
+                color={item.amount >= 0 ? Status.success : Status.error}
+              />
               <View style={styles.rowMeta}>
                 <Text style={[styles.desc, { color: theme.text }]} numberOfLines={1}>{item.description}</Text>
                 <Text style={[styles.date, { color: theme.textSecondary }]}>
@@ -65,7 +69,7 @@ export default function TransactionsScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>📊</Text>
+              <Icon name="bar-chart-outline" size={48} color={theme.textSecondary} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>No transactions yet</Text>
             </View>
           }
@@ -78,17 +82,16 @@ export default function TransactionsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2 },
-  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
+  back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
   skeletons: { padding: Spacing.four, gap: Spacing.two },
   list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
   row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  icon: { fontSize: 24 },
   rowMeta: { flex: 1, gap: 2 },
   desc: { fontSize: 14, fontWeight: '500' },
   date: { fontSize: 12 },
   amount: { fontSize: 15, fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 80, gap: Spacing.two },
-  emptyEmoji: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
 });

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Icon } from '@/components/icon';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -93,8 +94,9 @@ export default function SubmitQuoteScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.nav}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text }]}>Submit Quote</Text>
         <View style={{ width: 60 }} />
@@ -261,7 +263,7 @@ export default function SubmitQuoteScreen() {
                 )}
               />
               <Pressable onPress={() => remove(i)}>
-                <Text style={{ color: Status.error, fontSize: 18 }}>✕</Text>
+                <Icon name="close-circle" size={20} color={Status.error} />
               </Pressable>
             </View>
           ))}
@@ -299,7 +301,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two + 2,
   },
-  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
+  back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
   jobBanner: { marginHorizontal: Spacing.four, marginBottom: Spacing.two, borderRadius: 12, padding: Spacing.three, gap: 4 },
   jobBannerTitle: { fontSize: 14, fontWeight: '600', lineHeight: 20 },

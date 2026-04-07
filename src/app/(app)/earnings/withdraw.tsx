@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { Icon } from '@/components/icon';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
@@ -55,8 +56,9 @@ export default function WithdrawScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.nav}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text }]}>Withdraw</Text>
         <View style={{ width: 60 }} />
@@ -70,9 +72,12 @@ export default function WithdrawScreen() {
             <Text style={styles.balanceAmount}>₱{(wallet?.balance ?? 0).toLocaleString()}</Text>
           </View>
 
-          <Text style={[styles.notice, { color: theme.textSecondary }]}>
-            ℹ️ Withdrawals are processed within 1-3 business days. Minimum withdrawal is ₱100.
-          </Text>
+          <View style={styles.noticeRow}>
+            <Icon name="information-circle-outline" size={16} color={theme.textSecondary} />
+            <Text style={[styles.notice, { color: theme.textSecondary }]}>
+              Withdrawals are processed within 1-3 business days. Minimum withdrawal is ₱100.
+            </Text>
+          </View>
 
           <Controller
             control={control}
@@ -177,13 +182,15 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2 },
-  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
+  back: { fontSize: 15, fontWeight: '600' },
+  noticeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
   navTitle: { fontSize: 16, fontWeight: '700' },
   scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
   balanceCard: { borderRadius: 20, padding: Spacing.four, gap: Spacing.one },
   balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
   balanceAmount: { color: '#fff', fontSize: 32, fontWeight: '800' },
-  notice: { fontSize: 13, lineHeight: 18 },
+  notice: { fontSize: 13, lineHeight: 18, flex: 1 },
   field: { gap: Spacing.one },
   label: { fontSize: 13, fontWeight: '600' },
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2, fontSize: 15 },

@@ -4,16 +4,18 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getTransactions, getWallet } from '@/api/earnings';
+import { AppHeader } from '@/components/app-header';
+import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useEarningsStore } from '@/stores/earnings-store';
 
-const TX_ICONS: Record<string, string> = {
-  escrow_released: '💰',
-  commission:      '📊',
-  withdrawal:      '🏦',
-  referral_bonus:  '🎁',
+const TX_ICONS: Record<string, IconName> = {
+  escrow_released: 'cash-outline',
+  commission:      'bar-chart-outline',
+  withdrawal:      'business-outline',
+  referral_bonus:  'gift-outline',
 };
 
 export default function EarningsScreen() {
@@ -40,15 +42,12 @@ export default function EarningsScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+      <AppHeader title="Earnings" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />
-        }
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
       >
-        <Text style={[styles.heading, { color: theme.text }]}>Earnings</Text>
-
         {/* Balance card */}
         <View style={[styles.balanceCard, { backgroundColor: Primary[500] }]}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
@@ -95,16 +94,21 @@ export default function EarningsScreen() {
 
         {/* Commission notice */}
         <View style={[styles.notice, { backgroundColor: theme.backgroundElement }]}>
+          <Icon name="information-circle-outline" size={16} color={theme.textSecondary} />
           <Text style={[styles.noticeText, { color: theme.textSecondary }]}>
-            ℹ️ LocalPro deducts a 10% commission per completed job. Amounts shown are net.
+            LocalPro deducts a 10% commission per completed job. Amounts shown are net.
           </Text>
         </View>
 
         {/* Recent transactions */}
         <View style={styles.txHeader}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Recent Transactions</Text>
-          <Pressable onPress={() => router.push('/(app)/earnings/transactions')}>
+          <Pressable
+            style={styles.seeAllRow}
+            onPress={() => router.push('/(app)/earnings/transactions')}
+          >
             <Text style={[styles.seeAll, { color: Primary[500] }]}>See All</Text>
+            <Icon name="chevron-forward" size={14} color={Primary[500]} />
           </Pressable>
         </View>
 
@@ -115,19 +119,18 @@ export default function EarningsScreen() {
         ) : (
           txns.slice(0, 5).map((tx) => (
             <View key={tx.id} style={[styles.txRow, { backgroundColor: theme.backgroundElement }]}>
-              <Text style={styles.txIcon}>{TX_ICONS[tx.type] ?? '💳'}</Text>
+              <Icon
+                name={TX_ICONS[tx.type] ?? 'card-outline'}
+                size={22}
+                color={tx.amount >= 0 ? Status.success : Status.error}
+              />
               <View style={styles.txMeta}>
                 <Text style={[styles.txDesc, { color: theme.text }]} numberOfLines={1}>{tx.description}</Text>
                 <Text style={[styles.txDate, { color: theme.textSecondary }]}>
                   {new Date(tx.createdAt).toLocaleDateString()}
                 </Text>
               </View>
-              <Text
-                style={[
-                  styles.txAmount,
-                  { color: tx.amount >= 0 ? Status.success : Status.error },
-                ]}
-              >
+              <Text style={[styles.txAmount, { color: tx.amount >= 0 ? Status.success : Status.error }]}>
                 {tx.amount >= 0 ? '+' : ''}₱{Math.abs(tx.amount).toLocaleString()}
               </Text>
             </View>
@@ -140,8 +143,7 @@ export default function EarningsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 32 },
-  heading: { fontSize: 24, fontWeight: '700' },
+  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset },
   balanceCard: { borderRadius: 20, padding: Spacing.four, gap: Spacing.two },
   balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
   balanceAmount: { color: '#fff', fontSize: 36, fontWeight: '800' },
@@ -152,13 +154,13 @@ const styles = StyleSheet.create({
   summaryCard: { flex: 1, borderRadius: 14, padding: Spacing.three, gap: 4 },
   summaryValue: { fontSize: 18, fontWeight: '700' },
   summaryLabel: { fontSize: 12 },
-  notice: { borderRadius: 12, padding: Spacing.three },
-  noticeText: { fontSize: 13, lineHeight: 18 },
+  notice: { borderRadius: 12, padding: Spacing.three, flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  noticeText: { fontSize: 13, lineHeight: 18, flex: 1 },
   txHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 17, fontWeight: '700' },
+  seeAllRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   seeAll: { fontSize: 14, fontWeight: '600' },
   txRow: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  txIcon: { fontSize: 24 },
   txMeta: { flex: 1, gap: 2 },
   txDesc: { fontSize: 14, fontWeight: '500' },
   txDate: { fontSize: 12 },

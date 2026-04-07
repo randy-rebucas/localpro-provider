@@ -1,17 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getQuote, retractQuote } from '@/api/quotes';
+import { Icon } from '@/components/icon';
 import { StatusChip } from '@/components/status-chip';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -72,18 +65,16 @@ export default function QuoteDetailScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.nav}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text }]}>Quote Detail</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Job title */}
         <Text style={[styles.jobTitle, { color: theme.text }]}>{quote.jobTitle}</Text>
-
-        {/* Status */}
         <View style={styles.statusRow}>
           <StatusChip status={quote.status} />
           <Text style={[styles.date, { color: theme.textSecondary }]}>
@@ -91,19 +82,13 @@ export default function QuoteDetailScreen() {
           </Text>
         </View>
 
-        {/* Amounts */}
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
           <Row label="Quoted Amount" value={`₱${quote.proposedAmount.toLocaleString()}`} />
-          {quote.laborCost > 0 && (
-            <Row label="Labor Cost" value={`₱${quote.laborCost.toLocaleString()}`} />
-          )}
-          {quote.materialsCost > 0 && (
-            <Row label="Materials Cost" value={`₱${quote.materialsCost.toLocaleString()}`} />
-          )}
+          {quote.laborCost > 0 && <Row label="Labor Cost" value={`₱${quote.laborCost.toLocaleString()}`} />}
+          {quote.materialsCost > 0 && <Row label="Materials Cost" value={`₱${quote.materialsCost.toLocaleString()}`} />}
           <Row label="Timeline" value={quote.timeline} />
         </View>
 
-        {/* Notes */}
         {quote.notes && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Notes</Text>
@@ -111,7 +96,6 @@ export default function QuoteDetailScreen() {
           </>
         )}
 
-        {/* Milestones */}
         {quote.milestones.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Milestones</Text>
@@ -119,9 +103,7 @@ export default function QuoteDetailScreen() {
               {quote.milestones.map((m, i) => (
                 <View key={i} style={styles.msRow}>
                   <Text style={[styles.msTitle, { color: theme.text }]}>{m.title}</Text>
-                  <Text style={[styles.msAmount, { color: Primary[500] }]}>
-                    ₱{m.amount.toLocaleString()}
-                  </Text>
+                  <Text style={[styles.msAmount, { color: Primary[500] }]}>₱{m.amount.toLocaleString()}</Text>
                 </View>
               ))}
             </View>
@@ -155,7 +137,8 @@ export default function QuoteDetailScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2 },
-  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
+  back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
   scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
   jobTitle: { fontSize: 20, fontWeight: '700', lineHeight: 28 },

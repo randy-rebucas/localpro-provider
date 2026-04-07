@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getJob } from '@/api/jobs';
+import { Icon } from '@/components/icon';
 import { StatusChip } from '@/components/status-chip';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -40,25 +41,25 @@ export default function JobDetailScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       {/* Nav */}
       <View style={styles.nav}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         {job.isPriority && (
           <View style={[styles.priorityBadge, { backgroundColor: '#FEF3C7' }]}>
-            <Text style={styles.priorityText}>⭐ Priority</Text>
+            <Icon name="star" size={12} color="#D97706" />
+            <Text style={styles.priorityText}>Priority</Text>
           </View>
         )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Title & Budget */}
         <Text style={[styles.title, { color: theme.text }]}>{job.title}</Text>
         <View style={styles.metaRow}>
           <Text style={[styles.budget, { color: Primary[500] }]}>₱{job.budget.toLocaleString()}</Text>
           <StatusChip status={job.status} />
         </View>
 
-        {/* Tags */}
         {job.jobTags.length > 0 && (
           <View style={styles.tagRow}>
             {job.jobTags.map((tag) => (
@@ -69,25 +70,25 @@ export default function JobDetailScreen() {
           </View>
         )}
 
-        {/* Details card */}
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
           <DetailRow label="Category" value={job.category} />
-          <DetailRow label="Location" value={`📍 ${job.location}`} />
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Location</Text>
+            <View style={styles.detailValueRow}>
+              <Icon name="location-outline" size={13} color={theme.textSecondary} />
+              <Text style={[styles.detailValue, { color: theme.text }]}>{job.location}</Text>
+            </View>
+          </View>
           <DetailRow label="Status" value={job.status} />
           <DetailRow label="Escrow" value={job.escrowStatus.replace(/_/g, ' ')} />
           {job.scheduleDate && (
-            <DetailRow
-              label="Scheduled"
-              value={new Date(job.scheduleDate).toLocaleDateString()}
-            />
+            <DetailRow label="Scheduled" value={new Date(job.scheduleDate).toLocaleDateString()} />
           )}
         </View>
 
-        {/* Description */}
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Description</Text>
         <Text style={[styles.description, { color: theme.textSecondary }]}>{job.description}</Text>
 
-        {/* Special instructions */}
         {job.specialInstructions && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Special Instructions</Text>
@@ -97,7 +98,6 @@ export default function JobDetailScreen() {
           </>
         )}
 
-        {/* Milestones */}
         {job.milestones.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>Milestones</Text>
@@ -115,13 +115,12 @@ export default function JobDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Action */}
       <View style={[styles.actions, { borderTopColor: theme.backgroundElement, backgroundColor: theme.background }]}>
         <Pressable
           style={[styles.btn, { backgroundColor: Primary[500] }]}
           onPress={() => router.push(`/(app)/marketplace/${id}/quote`)}
         >
-          <Text style={styles.btnTextWhite}>Submit Quote</Text>
+          <Text style={styles.btnText}>Submit Quote</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -147,8 +146,9 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingBottom: Spacing.two,
   },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   back: { fontSize: 15, fontWeight: '600' },
-  priorityBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  priorityBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, flexDirection: 'row', alignItems: 'center', gap: 3 },
   priorityText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
   scroll: { paddingHorizontal: Spacing.four, gap: Spacing.three, paddingBottom: 32 },
   title: { fontSize: 22, fontWeight: '700', lineHeight: 30 },
@@ -161,6 +161,7 @@ const styles = StyleSheet.create({
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   detailLabel: { fontSize: 14 },
   detailValue: { fontSize: 14, fontWeight: '600', textAlign: 'right', flex: 1, marginLeft: Spacing.two },
+  detailValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' },
   sectionTitle: { fontSize: 17, fontWeight: '700' },
   description: { fontSize: 15, lineHeight: 24 },
   milestoneRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -168,5 +169,5 @@ const styles = StyleSheet.create({
   milestoneAmount: { fontSize: 14, fontWeight: '700' },
   actions: { padding: Spacing.four, borderTopWidth: 1 },
   btn: { borderRadius: 14, paddingVertical: Spacing.three - 2, alignItems: 'center' },
-  btnTextWhite: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

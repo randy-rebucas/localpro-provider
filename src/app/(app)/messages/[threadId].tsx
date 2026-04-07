@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import EventSource from 'react-native-sse';
 
 import { getMessages, sendMessage, type Message } from '@/api/messages';
+import { Icon } from '@/components/icon';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
@@ -28,19 +29,16 @@ function Bubble({ message, isMine }: { message: Message; isMine: boolean }) {
       <View
         style={[
           styles.bubble,
-          isMine
-            ? { backgroundColor: Primary[500] }
-            : { backgroundColor: theme.backgroundElement },
+          isMine ? { backgroundColor: Primary[500] } : { backgroundColor: theme.backgroundElement },
         ]}
       >
         {message.attachmentUrl ? (
-          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
-            📎 Attachment
-          </Text>
+          <View style={styles.attachRow}>
+            <Icon name="attach" size={14} color={isMine ? '#fff' : theme.text} />
+            <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>Attachment</Text>
+          </View>
         ) : (
-          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>
-            {message.body}
-          </Text>
+          <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{message.body}</Text>
         )}
       </View>
       <Text style={[styles.bubbleTime, { color: theme.textSecondary }]}>
@@ -66,7 +64,6 @@ export default function ChatScreen() {
     enabled: !!threadId,
   });
 
-  // SSE real-time stream
   useEffect(() => {
     if (!threadId) return;
     const es = new EventSource(`${API_URL}/api/messages/stream/${threadId}`);
@@ -101,10 +98,10 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      {/* Nav */}
       <View style={[styles.nav, { borderBottomColor: theme.backgroundElement }]}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Icon name="chevron-back" size={20} color={Primary[500]} />
+          <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
         </Pressable>
         <Text style={[styles.navTitle, { color: theme.text }]}>Chat</Text>
         <View style={{ width: 60 }} />
@@ -134,7 +131,6 @@ export default function ChatScreen() {
           }
         />
 
-        {/* Input bar */}
         <View style={[styles.inputBar, { backgroundColor: theme.background, borderTopColor: theme.backgroundElement }]}>
           <TextInput
             style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
@@ -150,7 +146,7 @@ export default function ChatScreen() {
             onPress={handleSend}
             disabled={!input.trim() || sending}
           >
-            <Text style={[styles.sendIcon, { opacity: input.trim() ? 1 : 0.4 }]}>↑</Text>
+            <Icon name="send" size={18} color={input.trim() ? '#fff' : theme.textSecondary} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -161,47 +157,22 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
-  nav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two + 2,
-    borderBottomWidth: 1,
-  },
-  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2, borderBottomWidth: 1 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
+  back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
   list: { padding: Spacing.three, gap: Spacing.two, paddingBottom: 16 },
   bubbleWrap: { maxWidth: '80%', gap: 2 },
   bubbleLeft: { alignSelf: 'flex-start' },
   bubbleRight: { alignSelf: 'flex-end' },
   bubble: { borderRadius: 16, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  attachRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   bubbleText: { fontSize: 15, lineHeight: 22, color: '#000' },
   bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 11, paddingHorizontal: 4 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.five },
   emptyText: { fontSize: 14 },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    padding: Spacing.two,
-    gap: Spacing.two,
-    borderTopWidth: 1,
-  },
-  input: {
-    flex: 1,
-    borderRadius: 20,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 15,
-    maxHeight: 120,
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendIcon: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', padding: Spacing.two, gap: Spacing.two, borderTopWidth: 1 },
+  input: { flex: 1, borderRadius: 20, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, fontSize: 15, maxHeight: 120 },
+  sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

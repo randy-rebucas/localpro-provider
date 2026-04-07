@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getProviderProfile, logout } from '@/api/auth';
+import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -27,7 +28,7 @@ function ProfileRow({ label, value, onPress }: { label: string; value: string; o
         <Text style={[styles.rowLabel, { color: theme.textSecondary }]}>{label}</Text>
         <Text style={[styles.rowValue, { color: theme.text }]} numberOfLines={2}>{value || '—'}</Text>
       </View>
-      {onPress && <Text style={[styles.rowArrow, { color: theme.textSecondary }]}>›</Text>}
+      {onPress && <Icon name="chevron-forward" size={18} color={theme.textSecondary} />}
     </Pressable>
   );
 }
@@ -46,10 +47,7 @@ export default function ProfileScreen() {
 
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: () => {
-      clearUser();
-      qc.clear();
-    },
+    onSuccess: () => { clearUser(); qc.clear(); },
   });
 
   const completion = profile?.completionPercent ?? 0;
@@ -67,7 +65,6 @@ export default function ProfileScreen() {
           <Text style={[styles.name, { color: theme.text }]}>{user?.name}</Text>
           <Text style={[styles.email, { color: theme.textSecondary }]}>{user?.email}</Text>
 
-          {/* Completion bar */}
           <View style={[styles.completionWrap, { backgroundColor: theme.backgroundElement }]}>
             <View style={styles.completionTop}>
               <Text style={[styles.completionLabel, { color: theme.textSecondary }]}>Profile completion</Text>
@@ -89,46 +86,22 @@ export default function ProfileScreen() {
           <>
             <ProfileSection title="PROFILE">
               <ProfileRow label="Bio" value={profile?.bio || 'Not set'} onPress={() => router.push('/(app)/profile/skills')} />
-              <ProfileRow
-                label="Skills"
-                value={profile?.skills?.map((s) => s.skill).join(', ') || 'Not set'}
-                onPress={() => router.push('/(app)/profile/skills')}
-              />
-              <ProfileRow
-                label="Years Experience"
-                value={profile?.yearsExperience ? `${profile.yearsExperience} years` : 'Not set'}
-                onPress={() => router.push('/(app)/profile/skills')}
-              />
-              <ProfileRow
-                label="Hourly Rate"
-                value={profile?.hourlyRate ? `₱${profile.hourlyRate}/hr` : 'Not set'}
-                onPress={() => router.push('/(app)/profile/skills')}
-              />
+              <ProfileRow label="Skills" value={profile?.skills?.map((s) => s.skill).join(', ') || 'Not set'} onPress={() => router.push('/(app)/profile/skills')} />
+              <ProfileRow label="Years Experience" value={profile?.yearsExperience ? `${profile.yearsExperience} years` : 'Not set'} onPress={() => router.push('/(app)/profile/skills')} />
+              <ProfileRow label="Hourly Rate" value={profile?.hourlyRate ? `₱${profile.hourlyRate}/hr` : 'Not set'} onPress={() => router.push('/(app)/profile/skills')} />
             </ProfileSection>
 
             <ProfileSection title="SERVICE AREAS">
-              <ProfileRow
-                label="Locations"
-                value={profile?.serviceAreas?.map((a) => a.label).join(', ') || 'Not set'}
-                onPress={() => router.push('/(app)/profile/service-areas')}
-              />
+              <ProfileRow label="Locations" value={profile?.serviceAreas?.map((a) => a.label).join(', ') || 'Not set'} onPress={() => router.push('/(app)/profile/service-areas')} />
             </ProfileSection>
 
             <ProfileSection title="CREDENTIALS">
-              <ProfileRow
-                label="Certifications"
-                value={profile?.certifications?.length ? `${profile.certifications.length} added` : 'None added'}
-                onPress={() => router.push('/(app)/profile/certifications')}
-              />
-              <ProfileRow
-                label="Portfolio"
-                value={profile?.portfolioItems?.length ? `${profile.portfolioItems.length} items` : 'None added'}
-                onPress={() => router.push('/(app)/profile/portfolio')}
-              />
+              <ProfileRow label="Certifications" value={profile?.certifications?.length ? `${profile.certifications.length} added` : 'None added'} onPress={() => router.push('/(app)/profile/certifications')} />
+              <ProfileRow label="Portfolio" value={profile?.portfolioItems?.length ? `${profile.portfolioItems.length} items` : 'None added'} onPress={() => router.push('/(app)/profile/portfolio')} />
             </ProfileSection>
 
             <ProfileSection title="STATS">
-              <ProfileRow label="Average Rating" value={profile?.avgRating ? `${profile.avgRating.toFixed(1)} ⭐` : 'No ratings yet'} />
+              <ProfileRow label="Average Rating" value={profile?.avgRating ? `${profile.avgRating.toFixed(1)} ★` : 'No ratings yet'} />
               <ProfileRow label="Completed Jobs" value={String(profile?.completedJobCount ?? 0)} />
               <ProfileRow label="Availability" value={profile?.availabilityStatus ?? 'available'} />
             </ProfileSection>
@@ -140,12 +113,12 @@ export default function ProfileScreen() {
           </>
         )}
 
-        {/* Logout */}
         <Pressable
           style={[styles.logoutBtn, { borderColor: Status.error }]}
           onPress={() => logoutMutation.mutate()}
           disabled={logoutMutation.isPending}
         >
+          <Icon name="log-out-outline" size={18} color={Status.error} />
           <Text style={[styles.logoutText, { color: Status.error }]}>
             {logoutMutation.isPending ? 'Logging out…' : 'Log Out'}
           </Text>
@@ -175,7 +148,6 @@ const styles = StyleSheet.create({
   rowContent: { flex: 1, gap: 2 },
   rowLabel: { fontSize: 12 },
   rowValue: { fontSize: 14, fontWeight: '500' },
-  rowArrow: { fontSize: 20, fontWeight: '300' },
-  logoutBtn: { borderRadius: 14, borderWidth: 1.5, paddingVertical: Spacing.three, alignItems: 'center' },
+  logoutBtn: { borderRadius: 14, borderWidth: 1.5, paddingVertical: Spacing.three, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: Spacing.two },
   logoutText: { fontSize: 15, fontWeight: '700' },
 });

@@ -1,28 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getNotifications, markAllRead, markOneRead, type AppNotification } from '@/api/notifications';
+import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-const TYPE_ICON: Record<string, string> = {
-  job_assigned:    '💼',
-  quote_accepted:  '✅',
-  quote_rejected:  '❌',
-  payment_received:'💰',
-  message:         '💬',
-  job_completed:   '🏆',
-  review_received: '⭐',
-  system:          '🔔',
+const TYPE_ICON: Record<string, IconName> = {
+  job_assigned:     'briefcase-outline',
+  quote_accepted:   'checkmark-circle-outline',
+  quote_rejected:   'close-circle-outline',
+  payment_received: 'cash-outline',
+  message:          'chatbubble-outline',
+  job_completed:    'trophy-outline',
+  review_received:  'star-outline',
+  system:           'notifications-outline',
 };
 
 function NotifRow({ notif, onPress }: { notif: AppNotification; onPress: () => void }) {
@@ -36,9 +30,15 @@ function NotifRow({ notif, onPress }: { notif: AppNotification; onPress: () => v
       ]}
       onPress={onPress}
     >
-      <Text style={styles.icon}>{TYPE_ICON[notif.type] ?? '🔔'}</Text>
+      <Icon
+        name={TYPE_ICON[notif.type] ?? 'notifications-outline'}
+        size={24}
+        color={notif.read ? theme.textSecondary : Primary[500]}
+      />
       <View style={styles.rowContent}>
-        <Text style={[styles.message, { color: theme.text }, !notif.read && { fontWeight: '700' }]}>
+        <Text
+          style={[styles.message, { color: theme.text }, !notif.read && { fontWeight: '700' }]}
+        >
           {notif.message}
         </Text>
         <Text style={[styles.time, { color: theme.textSecondary }]}>
@@ -95,20 +95,13 @@ export default function NotificationsScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
           renderItem={({ item }) => (
-            <NotifRow
-              notif={item}
-              onPress={() => {
-                if (!item.read) markOne.mutate(item._id);
-              }}
-            />
+            <NotifRow notif={item} onPress={() => { if (!item.read) markOne.mutate(item._id); }} />
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Icon name="notifications-outline" size={48} color={theme.textSecondary} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>All caught up!</Text>
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                 New job alerts and updates will appear here.
@@ -123,33 +116,17 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.two,
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.two },
   heading: { fontSize: 24, fontWeight: '700' },
   markAll: { fontSize: 14, fontWeight: '600' },
   skeletons: { padding: Spacing.four, gap: Spacing.two },
   list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
-  row: {
-    borderRadius: 14,
-    padding: Spacing.three,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
-    overflow: 'hidden',
-  },
-  icon: { fontSize: 24, marginTop: 1 },
+  row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two, overflow: 'hidden' },
   rowContent: { flex: 1, gap: 4 },
   message: { fontSize: 14, lineHeight: 20 },
   time: { fontSize: 12 },
   dot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
   empty: { alignItems: 'center', paddingTop: 80, gap: Spacing.two, paddingHorizontal: Spacing.five },
-  emptyEmoji: { fontSize: 48 },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
   emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 });

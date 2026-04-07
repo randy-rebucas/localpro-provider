@@ -83,5 +83,10 @@ export const Spacing = {
   six: 64,
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+/**
+ * Bottom padding so scrollable content clears the floating pill tab bar.
+ * Bar is 64 px tall, sitting 28 px (iOS) / 14 px (Android) above the screen edge.
+ * Add 8 px extra so the last item doesn't feel cramped.
+ */
+export const BottomTabInset = Platform.select({ ios: 100, android: 86 }) ?? 82;
 export const MaxContentWidth = 800;

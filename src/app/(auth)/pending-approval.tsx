@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { logout } from '@/api/auth';
+import { Icon } from '@/components/icon';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
@@ -13,9 +14,7 @@ export default function PendingApprovalScreen() {
   const clearUser = useAuthStore((s) => s.clearUser);
 
   async function handleLogout() {
-    try {
-      await logout();
-    } finally {
+    try { await logout(); } finally {
       clearUser();
       router.replace('/(auth)/login');
     }
@@ -25,7 +24,7 @@ export default function PendingApprovalScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
         <View style={[styles.iconWrap, { backgroundColor: Status.warningBg }]}>
-          <Text style={styles.icon}>⏳</Text>
+          <Icon name="time" size={44} color={Status.warning} />
         </View>
 
         <Text style={[styles.title, { color: theme.text }]}>Account Pending Approval</Text>
@@ -43,7 +42,7 @@ export default function PendingApprovalScreen() {
             'Set your service areas',
           ].map((item) => (
             <View key={item} style={styles.bulletRow}>
-              <View style={[styles.dot, { backgroundColor: Primary[500] }]} />
+              <Icon name="checkmark-circle-outline" size={16} color={Primary[500]} />
               <Text style={[styles.bulletText, { color: theme.textSecondary }]}>{item}</Text>
             </View>
           ))}
@@ -73,33 +72,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.three,
   },
-  iconWrap: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.two,
-  },
-  icon: { fontSize: 40 },
+  iconWrap: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.two },
   title: { fontSize: 24, fontWeight: '700', textAlign: 'center' },
   body: { fontSize: 15, textAlign: 'center', lineHeight: 22 },
-  card: {
-    borderRadius: 16,
-    padding: Spacing.three,
-    width: '100%',
-    gap: Spacing.two,
-  },
+  card: { borderRadius: 16, padding: Spacing.three, width: '100%', gap: Spacing.two },
   cardTitle: { fontSize: 15, fontWeight: '600', marginBottom: Spacing.one },
   bulletRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  bulletText: { fontSize: 14 },
-  button: {
-    width: '100%',
-    borderRadius: 12,
-    paddingVertical: Spacing.three - 2,
-    alignItems: 'center',
-  },
+  bulletText: { fontSize: 14, flex: 1 },
+  button: { width: '100%', borderRadius: 12, paddingVertical: Spacing.three - 2, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   logoutBtn: { paddingVertical: Spacing.two },
   logoutText: { fontSize: 14 },
