@@ -95,7 +95,7 @@ export default function JobsScreen() {
       ) : (
         <FlatList
           data={data ?? []}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           refreshControl={

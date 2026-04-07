@@ -1,12 +1,196 @@
-import { StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/hooks/use-theme";
-export default function Screen() {
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { Controller, useForm } from 'react-hook-form';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { z } from 'zod';
+
+import { getWallet, requestWithdrawal } from '@/api/earnings';
+import { Primary, Spacing, Status } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+const schema = z.object({
+  amount:        z.string().min(1, 'Required').refine((v) => Number(v) >= 100, 'Minimum ₱100'),
+  bankName:      z.string().min(2, 'Required'),
+  accountNumber: z.string().min(4, 'Required'),
+  accountName:   z.string().min(2, 'Required'),
+});
+
+type FormData = z.infer<typeof schema>;
+
+export default function WithdrawScreen() {
   const theme = useTheme();
+  const router = useRouter();
+
+  const { data: wallet } = useQuery({ queryKey: ['wallet'], queryFn: getWallet });
+
+  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (v: FormData) =>
+      requestWithdrawal({
+        amount:        Number(v.amount),
+        bankName:      v.bankName,
+        accountNumber: v.accountNumber,
+        accountName:   v.accountName,
+      }),
+    onSuccess: () => router.back(),
+  });
+
+  const inputStyle = [styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }];
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={styles.c}><Text style={{ color: theme.text, fontSize: 18, fontWeight: "600" }}>Coming soon</Text></View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+      <View style={styles.nav}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={[styles.back, { color: Primary[500] }]}>← Back</Text>
+        </Pressable>
+        <Text style={[styles.navTitle, { color: theme.text }]}>Withdraw</Text>
+        <View style={{ width: 60 }} />
+      </View>
+
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* Balance display */}
+          <View style={[styles.balanceCard, { backgroundColor: Primary[500] }]}>
+            <Text style={styles.balanceLabel}>Available Balance</Text>
+            <Text style={styles.balanceAmount}>₱{(wallet?.balance ?? 0).toLocaleString()}</Text>
+          </View>
+
+          <Text style={[styles.notice, { color: theme.textSecondary }]}>
+            ℹ️ Withdrawals are processed within 1-3 business days. Minimum withdrawal is ₱100.
+          </Text>
+
+          <Controller
+            control={control}
+            name="amount"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: theme.text }]}>Amount (₱) *</Text>
+                <TextInput
+                  style={inputStyle}
+                  placeholder={`Max ₱${(wallet?.balance ?? 0).toLocaleString()}`}
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="numeric"
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.amount && <Text style={styles.error}>{errors.amount.message}</Text>}
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="bankName"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: theme.text }]}>Bank Name *</Text>
+                <TextInput
+                  style={inputStyle}
+                  placeholder="e.g. BDO, BPI, GCash"
+                  placeholderTextColor={theme.textSecondary}
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.bankName && <Text style={styles.error}>{errors.bankName.message}</Text>}
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="accountNumber"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: theme.text }]}>Account Number *</Text>
+                <TextInput
+                  style={inputStyle}
+                  placeholder="Your account/mobile number"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="numeric"
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.accountNumber && <Text style={styles.error}>{errors.accountNumber.message}</Text>}
+              </View>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="accountName"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.field}>
+                <Text style={[styles.label, { color: theme.text }]}>Account Name *</Text>
+                <TextInput
+                  style={inputStyle}
+                  placeholder="Name on the account"
+                  placeholderTextColor={theme.textSecondary}
+                  value={value}
+                  onChangeText={onChange}
+                />
+                {errors.accountName && <Text style={styles.error}>{errors.accountName.message}</Text>}
+              </View>
+            )}
+          />
+
+          {mutation.isError && (
+            <Text style={styles.submitError}>Failed to submit withdrawal request. Please try again.</Text>
+          )}
+
+          {mutation.isSuccess && (
+            <Text style={styles.submitSuccess}>Withdrawal request submitted successfully!</Text>
+          )}
+
+          <Pressable
+            style={[styles.btn, { backgroundColor: Primary[500] }, mutation.isPending && styles.btnDisabled]}
+            onPress={handleSubmit((v) => mutation.mutate(v))}
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.btnText}>Request Withdrawal</Text>
+            )}
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({ c: { flex: 1, alignItems: "center", justifyContent: "center" } });
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  flex: { flex: 1 },
+  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2 },
+  back: { fontSize: 15, fontWeight: '600', width: 60 },
+  navTitle: { fontSize: 16, fontWeight: '700' },
+  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  balanceCard: { borderRadius: 20, padding: Spacing.four, gap: Spacing.one },
+  balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
+  balanceAmount: { color: '#fff', fontSize: 32, fontWeight: '800' },
+  notice: { fontSize: 13, lineHeight: 18 },
+  field: { gap: Spacing.one },
+  label: { fontSize: 13, fontWeight: '600' },
+  input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2, fontSize: 15 },
+  error: { color: Status.error, fontSize: 12 },
+  submitError: { color: Status.error, fontSize: 13, textAlign: 'center' },
+  submitSuccess: { color: Status.success, fontSize: 13, textAlign: 'center' },
+  btn: { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
+  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  btnDisabled: { opacity: 0.6 },
+});

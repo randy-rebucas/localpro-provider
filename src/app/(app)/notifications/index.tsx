@@ -1,15 +1,155 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { getNotifications, markAllRead, markOneRead, type AppNotification } from '@/api/notifications';
+import { CardSkeleton } from '@/components/loading-skeleton';
+import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-export default function Screen() {
+const TYPE_ICON: Record<string, string> = {
+  job_assigned:    '💼',
+  quote_accepted:  '✅',
+  quote_rejected:  '❌',
+  payment_received:'💰',
+  message:         '💬',
+  job_completed:   '🏆',
+  review_received: '⭐',
+  system:          '🔔',
+};
+
+function NotifRow({ notif, onPress }: { notif: AppNotification; onPress: () => void }) {
   const theme = useTheme();
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: theme.background }]}>
-      <View style={styles.center}>
-        <Text style={{ color: theme.text, fontSize: 18, fontWeight: '600' }}>Coming soon</Text>
+    <Pressable
+      style={[
+        styles.row,
+        { backgroundColor: theme.backgroundElement },
+        !notif.read && { borderLeftWidth: 3, borderLeftColor: Primary[500] },
+      ]}
+      onPress={onPress}
+    >
+      <Text style={styles.icon}>{TYPE_ICON[notif.type] ?? '🔔'}</Text>
+      <View style={styles.rowContent}>
+        <Text style={[styles.message, { color: theme.text }, !notif.read && { fontWeight: '700' }]}>
+          {notif.message}
+        </Text>
+        <Text style={[styles.time, { color: theme.textSecondary }]}>
+          {new Date(notif.createdAt).toLocaleString()}
+        </Text>
       </View>
+      {!notif.read && <View style={[styles.dot, { backgroundColor: Primary[500] }]} />}
+    </Pressable>
+  );
+}
+
+export default function NotificationsScreen() {
+  const theme = useTheme();
+  const qc = useQueryClient();
+
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+  });
+
+  const notifications = data?.notifications ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
+
+  const markAll = useMutation({
+    mutationFn: markAllRead,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markOne = useMutation({
+    mutationFn: markOneRead,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.heading, { color: theme.text }]}>
+          Notifications {unreadCount > 0 && `(${unreadCount})`}
+        </Text>
+        {unreadCount > 0 && (
+          <Pressable onPress={() => markAll.mutate()}>
+            <Text style={[styles.markAll, { color: Primary[500] }]}>Mark all read</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {isLoading ? (
+        <View style={styles.skeletons}>
+          {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />
+          }
+          renderItem={({ item }) => (
+            <NotifRow
+              notif={item}
+              onPress={() => {
+                if (!item.read) markOne.mutate(item._id);
+              }}
+            />
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>All caught up!</Text>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                New job alerts and updates will appear here.
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({ center: { flex: 1, alignItems: 'center', justifyContent: 'center' } });
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.two,
+  },
+  heading: { fontSize: 24, fontWeight: '700' },
+  markAll: { fontSize: 14, fontWeight: '600' },
+  skeletons: { padding: Spacing.four, gap: Spacing.two },
+  list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
+  row: {
+    borderRadius: 14,
+    padding: Spacing.three,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+    overflow: 'hidden',
+  },
+  icon: { fontSize: 24, marginTop: 1 },
+  rowContent: { flex: 1, gap: 4 },
+  message: { fontSize: 14, lineHeight: 20 },
+  time: { fontSize: 12 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  empty: { alignItems: 'center', paddingTop: 80, gap: Spacing.two, paddingHorizontal: Spacing.five },
+  emptyEmoji: { fontSize: 48 },
+  emptyTitle: { fontSize: 18, fontWeight: '700' },
+  emptyText: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+});
