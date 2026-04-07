@@ -36,16 +36,20 @@ export interface ProviderProfile {
   completionPercent: number;
 }
 
-/** Normalise the raw API user to our AuthUser shape */
+/** Normalise the raw API user to our AuthUser shape.
+ *  NOTE: /api/auth/me does NOT return approvalStatus — only /api/auth/login does.
+ *  We default to 'approved' so bootstrap doesn't falsely gate approved providers.
+ *  The backend enforces real access control regardless of this client-side value.
+ */
 function normaliseUser(raw: Record<string, any>): AuthUser {
   return {
-    _id:            raw._id,
+    _id:            raw._id ?? raw.id,
     name:           raw.name,
     email:          raw.email,
     role:           raw.role,
     avatar:         raw.avatar ?? null,
-    isVerified:     raw.isVerified ?? false,
-    approvalStatus: raw.approvalStatus ?? 'pending',
+    isVerified:     raw.isVerified ?? raw.isEmailVerified ?? false,
+    approvalStatus: raw.approvalStatus ?? 'approved',
     isSuspended:    raw.isSuspended ?? false,
   };
 }

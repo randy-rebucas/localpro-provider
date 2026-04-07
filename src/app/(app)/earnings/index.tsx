@@ -30,11 +30,12 @@ export default function EarningsScreen() {
     },
   });
 
-  const { data: txns, isLoading: txLoading } = useQuery({
+  const { data: rawTxns, isLoading: txLoading } = useQuery({
     queryKey: ['transactions', { limit: 5 }],
-    queryFn: () => getTransactions(),
+    queryFn: () => getTransactions({ limit: 5 }),
   });
 
+  const txns = Array.isArray(rawTxns) ? rawTxns : [];
   const isLoading = walletLoading || txLoading;
 
   return (
@@ -109,10 +110,10 @@ export default function EarningsScreen() {
 
         {txLoading ? (
           [0, 1, 2].map((i) => <CardSkeleton key={i} />)
-        ) : (txns?.slice(0, 5) ?? []).length === 0 ? (
+        ) : txns.length === 0 ? (
           <Text style={[styles.emptyTx, { color: theme.textSecondary }]}>No transactions yet.</Text>
         ) : (
-          txns!.slice(0, 5).map((tx) => (
+          txns.slice(0, 5).map((tx) => (
             <View key={tx.id} style={[styles.txRow, { backgroundColor: theme.backgroundElement }]}>
               <Text style={styles.txIcon}>{TX_ICONS[tx.type] ?? '💳'}</Text>
               <View style={styles.txMeta}>

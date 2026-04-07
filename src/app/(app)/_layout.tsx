@@ -47,14 +47,17 @@ export default function AppLayout() {
   });
 
   useEffect(() => {
-    if (user && !isProviderApproved(user)) {
+    // Only redirect if approvalStatus is explicitly non-approved (not just missing).
+    // Defaulting to 'approved' in normaliseUser means this only fires when the
+    // server actually returns "pending" or "rejected" in a login/me response.
+    if (user && user.approvalStatus !== 'approved') {
       router.replace('/(auth)/pending-approval');
     }
   }, [user]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && user && !isProviderApproved(user)) {
+      if (state === 'active' && user && user.approvalStatus !== 'approved') {
         router.replace('/(auth)/pending-approval');
       }
     });

@@ -44,7 +44,7 @@ function AuthGuard() {
     if (!user && !inAuth) {
       router.replace('/(auth)/login');
     } else if (user && inAuth) {
-      if (!isProviderApproved(user)) {
+      if (user.approvalStatus === 'pending' || user.approvalStatus === 'rejected') {
         router.replace('/(auth)/pending-approval');
       } else {
         router.replace('/(app)');
