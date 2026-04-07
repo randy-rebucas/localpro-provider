@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { GlassView } from 'expo-glass-effect';
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
@@ -7,22 +6,19 @@ import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import { getProviderProfile } from '@/api/auth';
 import { Icon, type IconName } from '@/components/icon';
 import { Primary } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
 import { useNotificationStore } from '@/stores/notification-store';
 
 /* ─────────────────────────────────────────────────────
-   Tab bar dimensions (used both here + by screens)
+   Dimensions
 ───────────────────────────────────────────────────── */
-const BAR_HEIGHT   = 64;
-const BAR_BOTTOM   = Platform.select({ ios: 28, android: 14, default: 10 }) as number;
+const BAR_HEIGHT = 70;
+const BAR_BOTTOM = Platform.select({ ios: 24, android: 12, default: 8 }) as number;
 
-/** Total space the floating bar occupies at the bottom of the screen */
-export const TAB_BOTTOM_INSET = BAR_BOTTOM + BAR_HEIGHT + (Platform.OS === 'ios' ? 4 : 0);
+export const TAB_BOTTOM_INSET = BAR_BOTTOM + BAR_HEIGHT + 8;
 
 /* ─────────────────────────────────────────────────────
-   Tab icon component
+   Tab icon
 ───────────────────────────────────────────────────── */
 function TabIcon({
   icon,
@@ -37,18 +33,15 @@ function TabIcon({
   focused: boolean;
   badge?: number;
 }) {
-  const theme = useTheme();
-
   return (
     <View style={styles.tabItem}>
-      {/* Icon chip — active state gets a colored pill */}
-      <View style={[styles.iconChip, focused && styles.iconChipActive]}>
+      {/* Icon pill — gray oval only on active */}
+      <View style={[styles.iconOval, focused && styles.iconOvalActive]}>
         <Icon
           name={focused ? iconFocused : icon}
           size={22}
-          color={focused ? Primary[600] : theme.textSecondary}
+          color={focused ? Primary[500] : '#1f2937'}
         />
-        {/* Unread badge */}
         {!!badge && badge > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -56,15 +49,8 @@ function TabIcon({
         )}
       </View>
 
-      {/* Label — only visible when focused */}
-      <Text
-        style={[
-          styles.tabLabel,
-          { color: focused ? Primary[600] : theme.textSecondary },
-          !focused && styles.tabLabelHidden,
-        ]}
-        numberOfLines={1}
-      >
+      {/* Label */}
+      <Text style={[styles.label, focused && styles.labelActive]} numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -75,18 +61,14 @@ function TabIcon({
    Layout
 ───────────────────────────────────────────────────── */
 export default function AppLayout() {
-  const theme       = useTheme();
-  const colorScheme = useColorScheme();
   const router      = useRouter();
   const user        = useAuthStore((s) => s.user);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
-  const glassScheme = colorScheme === 'dark' ? 'dark' : 'light';
-
   useQuery({
-    queryKey: ['provider-profile'],
-    queryFn:  getProviderProfile,
-    enabled:  !!user,
+    queryKey:  ['provider-profile'],
+    queryFn:   getProviderProfile,
+    enabled:   !!user,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -108,20 +90,11 @@ export default function AppLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown:    false,
-        tabBarShowLabel: false,
-        tabBarStyle:    [
-          styles.tabBar,
-          // Subtle border in light mode for definition
-          colorScheme !== 'dark' && { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
-        ],
-        tabBarBackground: () => (
-          <GlassView
-            style={[StyleSheet.absoluteFill, styles.glassBackground]}
-            glassEffectStyle="regular"
-            colorScheme={glassScheme}
-          />
-        ),
+        headerShown:      false,
+        tabBarShowLabel:  false,
+        tabBarStyle:      styles.tabBar,
+        tabBarItemStyle:  styles.tabBarItem,
+        tabBarBackground: () => <View style={styles.pill} />,
       }}
     >
       <Tabs.Screen
@@ -163,7 +136,7 @@ export default function AppLayout() {
             <TabIcon
               icon="chatbubble-outline"
               iconFocused="chatbubble"
-              label="Messages"
+              label="Chat"
               focused={focused}
               badge={unreadCount}
             />
@@ -171,7 +144,7 @@ export default function AppLayout() {
         }}
       />
 
-      {/* ── Hidden tabs (router.push only, not in tab bar) ── */}
+      {/* ── Hidden routes ── */}
       <Tabs.Screen name="quotes"          options={{ href: null }} />
       <Tabs.Screen name="notifications"   options={{ href: null }} />
       <Tabs.Screen name="support"         options={{ href: null }} />
@@ -189,7 +162,7 @@ export default function AppLayout() {
    Styles
 ───────────────────────────────────────────────────── */
 const styles = StyleSheet.create({
-  /* Floating pill bar */
+  /* ── Floating tab bar container ── */
   tabBar: {
     position:        'absolute',
     bottom:          BAR_BOTTOM,
@@ -199,62 +172,92 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderTopWidth:  0,
     elevation:       0,
-    borderRadius:    24,
-    overflow:        'hidden',    // clips GlassView to the rounded corners
-    // iOS shadow for depth
+    // iOS shadow
     shadowColor:     '#000',
-    shadowOffset:    { width: 0, height: 8 },
-    shadowOpacity:   0.12,
-    shadowRadius:    20,
+    shadowOffset:    { width: 0, height: 4 },
+    shadowOpacity:   0.08,
+    shadowRadius:    12,
   },
 
-  /* GlassView should also carry the corner radius */
-  glassBackground: {
-    borderRadius: 24,
+  /* Pure white pill */
+  pill: {
+    position:        'absolute',
+    top:             0,
+    left:            0,
+    right:           0,
+    bottom:          0,
+    height:          BAR_HEIGHT,
+    backgroundColor: '#ffffff',
+    borderRadius:    36,
+    elevation:       6,
+    shadowColor:     '#000',
+    shadowOffset:    { width: 0, height: 2 },
+    shadowOpacity:   0.07,
+    shadowRadius:    8,
   },
 
-  /* Each tab slot */
+  /* Tab slot */
+  tabBarItem: {
+    paddingTop:     0,
+    paddingBottom:  0,
+    justifyContent: 'center',
+    alignItems:     'center',
+  },
+
+  /* Tab content: icon above label */
   tabItem: {
     alignItems:     'center',
     justifyContent: 'center',
-    gap:            2,
+    gap:            3,
   },
 
-  /* Icon container — pill highlight when active */
-  iconChip: {
-    paddingHorizontal: 12,
-    paddingVertical:   6,
-    borderRadius:      20,
-    alignItems:        'center',
-    justifyContent:    'center',
+  /* Icon container — perfect circle, sized by width/height */
+  iconOval: {
+    marginTop:      22,
+    width:          30,
+    height:         30,
+    borderRadius:   15,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
-  iconChipActive: {
-    backgroundColor: Primary[50],   // very light brand tint
+
+  /* Active: light gray circle background */
+  iconOvalActive: {
+    backgroundColor: '#e9eaf0',
+    borderWidth:     4,
+    borderColor:     '#ffffff',
+    width:          60,
+    height:         60,
+    borderRadius:   30,
+    marginTop:      0,
   },
 
   /* Label */
-  tabLabel: {
-    fontSize:   10,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+  label: {
+    fontSize:      8,
+    fontWeight:    '600',
+    color:         '#374151',
+    // letterSpacing: 0.1,
   },
-  tabLabelHidden: {
-    // keep in layout so tab item height stays stable, but invisible
-    opacity: 0,
-    height:  0,
-    overflow: 'hidden',
+  labelActive: {
+    color:      Primary[500],
+    fontWeight: '700',
   },
 
-  /* Notification badge on the icon chip */
+  /* Badge */
   badge: {
-    position:         'absolute',
-    top:              -2,
-    right:            -4,
-    backgroundColor:  '#dc2626',
-    borderRadius:     8,
-    minWidth:         15,
-    paddingHorizontal: 3,
-    alignItems:       'center',
+    position:          'absolute',
+    top:               0,
+    right:             0,
+    backgroundColor:   '#ef4444',
+    borderRadius:      9,
+    minWidth:          18,
+    height:            18,
+    paddingHorizontal: 4,
+    alignItems:        'center',
+    justifyContent:    'center',
+    borderWidth:       1.5,
+    borderColor:       '#ffffff',
   },
-  badgeText: { color: '#fff', fontSize: 9, fontWeight: '800', lineHeight: 14 },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '800', lineHeight: 13 },
 });

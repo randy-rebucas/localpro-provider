@@ -88,5 +88,5 @@ export const Spacing = {
  * Bar is 64 px tall, sitting 28 px (iOS) / 14 px (Android) above the screen edge.
  * Add 8 px extra so the last item doesn't feel cramped.
  */
-export const BottomTabInset = Platform.select({ ios: 100, android: 86 }) ?? 82;
+export const BottomTabInset = Platform.select({ ios: 108, android: 96 }) ?? 88;
 export const MaxContentWidth = 800;
