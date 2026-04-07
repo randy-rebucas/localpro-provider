@@ -20,18 +20,28 @@ import { CardSkeleton } from '@/components/loading-skeleton';
 import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-const CATEGORIES = ['All', 'Electrical', 'Plumbing', 'Carpentry', 'Painting', 'Cleaning', 'HVAC', 'Other'];
+const CATEGORIES: { label: string; icon: string }[] = [
+  { label: 'All',        icon: 'grid-outline' },
+  { label: 'Electrical', icon: 'flash-outline' },
+  { label: 'Plumbing',   icon: 'water-outline' },
+  { label: 'Carpentry',  icon: 'hammer-outline' },
+  { label: 'Painting',   icon: 'color-palette-outline' },
+  { label: 'Cleaning',   icon: 'sparkles-outline' },
+  { label: 'HVAC',       icon: 'thermometer-outline' },
+  { label: 'Other',      icon: 'ellipsis-horizontal-outline' },
+];
 
-const TAG_COLOR: Record<string, { color: string; bg: string }> = {
-  PESO:      { color: Status.info,    bg: Status.infoBg },
-  LGU:       { color: Status.success, bg: Status.successBg },
-  Emergency: { color: Status.error,   bg: Status.errorBg },
+const TAG_META: Record<string, { color: string; bg: string; icon: string }> = {
+  PESO:      { color: Status.info,    bg: Status.infoBg,    icon: 'shield-checkmark-outline' },
+  LGU:       { color: Status.success, bg: Status.successBg, icon: 'business-outline' },
+  Emergency: { color: Status.error,   bg: Status.errorBg,   icon: 'flash-outline' },
 };
 
 function TagChip({ tag }: { tag: string }) {
-  const c = TAG_COLOR[tag] ?? { color: Status.warning, bg: Status.warningBg };
+  const c = TAG_META[tag] ?? { color: Status.warning, bg: Status.warningBg, icon: 'pricetag-outline' };
   return (
-    <View style={[styles.tagChip, { backgroundColor: c.bg }]}>
+    <View style={[styles.tagChip, { backgroundColor: c.bg, borderColor: c.color }]}>
+      <Icon name={c.icon as any} size={11} color={c.color} />
       <Text style={[styles.tagText, { color: c.color }]}>{tag}</Text>
     </View>
   );
@@ -105,12 +115,16 @@ export default function MarketplaceScreen() {
   );
   const sorted = [...filtered].sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0));
 
+  const activeCount = category !== 'All'
+    ? sorted.length
+    : undefined;
+
   const aiToggle = (
     <Pressable
       style={[styles.aiToggle, { backgroundColor: aiRank ? Primary[500] : theme.backgroundElement }]}
       onPress={() => setAiRank((v) => !v)}
     >
-      <Icon name="sparkles" size={14} color={aiRank ? '#fff' : theme.textSecondary} />
+      <Icon name="flash" size={14} color={aiRank ? '#fff' : theme.textSecondary} />
       <Text style={[styles.aiToggleText, { color: aiRank ? '#fff' : theme.textSecondary }]}>
         AI Rank
       </Text>
@@ -137,22 +151,29 @@ export default function MarketplaceScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.categoriesScroll}
         contentContainerStyle={styles.categories}
       >
-        {CATEGORIES.map((cat) => (
-          <Pressable
-            key={cat}
-            style={[
-              styles.catChip,
-              { backgroundColor: cat === category ? Primary[500] : theme.backgroundElement },
-            ]}
-            onPress={() => setCategory(cat)}
-          >
-            <Text style={[styles.catText, { color: cat === category ? '#fff' : theme.textSecondary }]}>
-              {cat}
-            </Text>
-          </Pressable>
-        ))}
+        {CATEGORIES.map(({ label, icon }) => {
+          const active = label === category;
+          return (
+            <Pressable
+              key={label}
+              style={[styles.catChip, active && styles.catChipActive]}
+              onPress={() => setCategory(label)}
+            >
+              <Icon
+                name={icon as any}
+                size={14}
+                color={active ? Primary[600] : theme.textSecondary}
+              />
+              <Text style={[styles.catText, { color: active ? Primary[600] : theme.textSecondary }]}>
+                {label}
+              </Text>
+              {active && <View style={styles.catDot} />}
+            </Pressable>
+          );
+        })}
       </ScrollView>
 
       {/* List */}
@@ -201,9 +222,39 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   searchInput: { flex: 1, fontSize: 15, paddingVertical: Spacing.two + 2 },
-  categories: { paddingHorizontal: Spacing.four, gap: Spacing.two, paddingBottom: Spacing.two },
-  catChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
-  catText: { fontSize: 13, fontWeight: '500' },
+  categoriesScroll: {
+    flexGrow:  0,          // prevent ScrollView from expanding vertically
+    height:    44,
+  },
+  categories: {
+    paddingHorizontal: Spacing.four,
+    gap:               8,
+    alignItems:        'center',
+    paddingVertical:   4,
+  },
+  catChip: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               5,
+    borderRadius:      20,
+    paddingHorizontal: 12,
+    paddingVertical:   5,
+    backgroundColor:   'transparent',
+    borderWidth:       1.5,
+    borderColor:       'transparent',
+  },
+  catChipActive: {
+    backgroundColor: Primary[50],
+    borderColor:     Primary[200],
+  },
+  catDot: {
+    width:           6,
+    height:          6,
+    borderRadius:    3,
+    backgroundColor: Primary[500],
+    marginLeft:      1,
+  },
+  catText: { fontSize: 13, fontWeight: '600' },
   list: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset },
   skeletons: { padding: Spacing.four, gap: Spacing.three },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
@@ -223,8 +274,17 @@ const styles = StyleSheet.create({
   category: { fontSize: 13 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   location: { fontSize: 13, flex: 1 },
-  tagRow: { flexDirection: 'row', gap: Spacing.one, flexWrap: 'wrap' },
-  tagChip: { borderRadius: 100, paddingHorizontal: 8, paddingVertical: 2 },
+  tagRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 2 },
+  tagChip: {
+    flexDirection:    'row',
+    alignItems:       'center',
+    gap:              4,
+    borderRadius:     100,
+    paddingHorizontal: 8,
+    paddingVertical:   3,
+    borderWidth:      1,
+    borderColor:      'transparent',
+  },
   tagText: { fontSize: 11, fontWeight: '700' },
   dateText: { fontSize: 12 },
   empty: { alignItems: 'center', paddingTop: 60, gap: Spacing.two },

@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getJob } from '@/api/jobs';
 import { Icon } from '@/components/icon';
 import { StatusChip } from '@/components/status-chip';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function JobDetailScreen() {
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 15, fontWeight: '600' },
   priorityBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, flexDirection: 'row', alignItems: 'center', gap: 3 },
   priorityText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
-  scroll: { paddingHorizontal: Spacing.four, gap: Spacing.three, paddingBottom: 32 },
+  scroll: { paddingHorizontal: Spacing.four, gap: Spacing.three, paddingBottom: Spacing.three },
   title: { fontSize: 22, fontWeight: '700', lineHeight: 30 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   budget: { fontSize: 20, fontWeight: '700' },
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   milestoneRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   milestoneTitle: { fontSize: 14, flex: 1 },
   milestoneAmount: { fontSize: 14, fontWeight: '700' },
-  actions: { padding: Spacing.four, borderTopWidth: 1 },
+  actions: { padding: Spacing.four, paddingBottom: BottomTabInset, borderTopWidth: 1 },
   btn: { borderRadius: 14, paddingVertical: Spacing.three - 2, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

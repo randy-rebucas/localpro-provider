@@ -9,6 +9,15 @@ export interface AuthUser {
   isVerified: boolean;
   approvalStatus: string;   // "pending" | "approved" | "rejected"
   isSuspended?: boolean;
+  kycStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  phone?: string | null;
+  addresses?: {
+    _id: string;
+    label: string;
+    address: string;
+    isDefault: boolean;
+    coordinates?: { lat: number; lng: number };
+  }[];
 }
 
 export interface ProviderProfile {
@@ -22,6 +31,7 @@ export interface ProviderProfile {
   yearsExperience: number;
   avgRating: number;
   completedJobCount: number;
+  completionRate: number;
   availabilityStatus: string;
   pesoVerificationTags: string[];
   userId: {
@@ -51,6 +61,9 @@ function normaliseUser(raw: Record<string, any>): AuthUser {
     isVerified:     raw.isVerified ?? raw.isEmailVerified ?? false,
     approvalStatus: raw.approvalStatus ?? 'approved',
     isSuspended:    raw.isSuspended ?? false,
+    kycStatus:      raw.kycStatus ?? 'none',
+    phone:          raw.phone ?? null,
+    addresses:      raw.addresses ?? [],
   };
 }
 

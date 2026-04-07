@@ -10,6 +10,11 @@ export default function ProfileLayout() {
       <Stack.Screen name="service-areas" />
       <Stack.Screen name="certifications" />
       <Stack.Screen name="portfolio" />
+      <Stack.Screen name="addresses" />
+      <Stack.Screen name="kyc" />
+      <Stack.Screen name="boost" />
+      <Stack.Screen name="training/index" />
+      <Stack.Screen name="training/[id]" />
       <Stack.Screen name="settings" />
     </Stack>
   );

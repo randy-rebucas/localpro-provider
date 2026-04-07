@@ -44,7 +44,7 @@ export default function UploadCompletionScreen() {
   async function pickPhoto() {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.85,
       allowsEditing: true,
     });
