@@ -11,6 +11,8 @@ export interface AuthUser {
   isSuspended?: boolean;
   kycStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   phone?: string | null;
+  accountType?: 'personal' | 'business';
+  agencyId?: string | null;
   addresses?: {
     _id: string;
     label: string;
@@ -63,6 +65,8 @@ function normaliseUser(raw: Record<string, any>): AuthUser {
     isSuspended:    raw.isSuspended ?? false,
     kycStatus:      raw.kycStatus ?? 'none',
     phone:          raw.phone ?? null,
+    accountType:    raw.accountType ?? 'personal',
+    agencyId:       raw.agencyId ?? null,
     addresses:      raw.addresses ?? [],
   };
 }

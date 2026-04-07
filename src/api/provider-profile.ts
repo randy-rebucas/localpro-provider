@@ -177,10 +177,32 @@ export async function uploadFile(
   return data;
 }
 
-/* ─── User update (phone / avatar) ─────────────────────────────────── */
+/* ─── Avatar upload ─────────────────────────────────────────────────── */
 
-/** PUT /api/auth/me — update phone number or avatar URL */
-export async function updateMe(payload: { phone?: string | null; avatar?: string }): Promise<void> {
+/**
+ * POST /api/auth/me/avatar — single-step multipart upload.
+ * Server handles Cloudinary upload, saves URL, deletes old avatar.
+ * Returns the new Cloudinary URL.
+ */
+export async function uploadAvatar(uri: string, mimeType = 'image/jpeg'): Promise<string> {
+  const form = new FormData();
+  form.append('file', { uri, name: 'avatar.jpg', type: mimeType } as any);
+  const { data } = await api.post<{ avatar: string }>('/api/auth/me/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.avatar;
+}
+
+/* ─── User update (name / phone / avatar / password) ────────────────── */
+
+/** PUT /api/auth/me — update name, phone, avatar URL, or password */
+export async function updateMe(payload: {
+  name?: string;
+  phone?: string | null;
+  avatar?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}): Promise<void> {
   await api.put('/api/auth/me', payload);
 }
 

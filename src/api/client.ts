@@ -8,7 +8,36 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-/** Auth endpoints that must never trigger the 401 → refresh loop */
+/* ── CSRF token cache ─────────────────────────────────────────── */
+let csrfCache: { token: string; expiresAt: number } | null = null;
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfCache && Date.now() < csrfCache.expiresAt * 1000) return csrfCache.token;
+  const res = await fetch(`${BASE_URL}/api/auth/csrf`, { credentials: 'include' });
+  if (!res.ok) throw new Error('Failed to fetch CSRF token');
+  const data: { token: string; expiresAt: number } = await res.json();
+  csrfCache = data;
+  return data.token;
+}
+
+export function clearCsrfCache() {
+  csrfCache = null;
+}
+
+/** Attach x-csrf-token to every mutating request */
+api.interceptors.request.use(async (config) => {
+  const method = config.method?.toUpperCase() ?? 'GET';
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    try {
+      config.headers['x-csrf-token'] = await getCsrfToken();
+    } catch {
+      // If CSRF fetch fails let the request through — server will reject with 403
+    }
+  }
+  return config;
+});
+
+/* ── Auth endpoints that must never trigger the 401 → refresh loop */
 const AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
 
 let isRefreshing = false;
@@ -27,6 +56,11 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const url = original?.url ?? '';
+
+    // Clear CSRF cache on 403 (token expired / invalid)
+    if (error.response?.status === 403) {
+      clearCsrfCache();
+    }
 
     // Never retry auth endpoints — surface the error immediately
     const isAuthPath = AUTH_PATHS.some((p) => url.includes(p));

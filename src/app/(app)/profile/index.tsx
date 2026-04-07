@@ -10,12 +10,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getMe, getProviderProfile, logout } from '@/api/auth';
-import { getProviderTier, updateMe, uploadFile } from '@/api/provider-profile';
+import { getProviderTier, updateMe, uploadAvatar } from '@/api/provider-profile';
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
@@ -68,6 +69,8 @@ export default function ProfileScreen() {
   const qc = useQueryClient();
   const { user, clearUser, setUser } = useAuthStore();
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [editingName,   setEditingName]   = useState(false);
+  const [nameInput,     setNameInput]     = useState('');
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['provider-profile'],
@@ -102,15 +105,39 @@ export default function ProfileScreen() {
     setAvatarLoading(true);
     try {
       const asset = result.assets[0];
-      const { url } = await uploadFile(asset.uri, 'avatars', asset.mimeType ?? 'image/jpeg');
-      await updateMe({ avatar: url });
+      // Single-step: POST /api/auth/me/avatar — server handles Cloudinary + saves URL
+      const url = await uploadAvatar(asset.uri, asset.mimeType ?? 'image/jpeg');
       qc.invalidateQueries({ queryKey: ['me'] });
       if (user) setUser({ ...user, avatar: url });
     } catch {
-      Alert.alert('Error', 'Could not upload avatar.');
+      Alert.alert('Error', 'Could not upload avatar. Please try again.');
     } finally {
       setAvatarLoading(false);
     }
+  }
+
+  const nameMutation = useMutation({
+    mutationFn: (name: string) => updateMe({ name }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['me'] });
+      if (user) setUser({ ...user, name: nameInput.trim() });
+      setEditingName(false);
+    },
+    onError: () => Alert.alert('Error', 'Could not update name.'),
+  });
+
+  function startEditName() {
+    setNameInput(user?.name ?? '');
+    setEditingName(true);
+  }
+
+  function saveName() {
+    const trimmed = nameInput.trim();
+    if (trimmed.length < 2) {
+      Alert.alert('Invalid name', 'Name must be at least 2 characters.');
+      return;
+    }
+    nameMutation.mutate(trimmed);
   }
 
   return (
@@ -135,8 +162,41 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          {/* Name + email */}
-          <Text style={[styles.heroName, { color: theme.text }]}>{user?.name}</Text>
+          {/* Name — tappable to edit inline */}
+          {editingName ? (
+            <View style={styles.nameEditRow}>
+              <TextInput
+                style={[styles.nameInput, { backgroundColor: theme.background, color: theme.text }]}
+                value={nameInput}
+                onChangeText={setNameInput}
+                autoFocus
+                maxLength={100}
+                returnKeyType="done"
+                onSubmitEditing={saveName}
+              />
+              <Pressable
+                style={[styles.nameEditBtn, { backgroundColor: Primary[500] }]}
+                onPress={saveName}
+                disabled={nameMutation.isPending}
+              >
+                {nameMutation.isPending
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Icon name="checkmark" size={16} color="#fff" />
+                }
+              </Pressable>
+              <Pressable
+                style={[styles.nameEditBtn, { backgroundColor: theme.background }]}
+                onPress={() => setEditingName(false)}
+              >
+                <Icon name="close" size={16} color={theme.textSecondary} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={styles.nameRow} onPress={startEditName}>
+              <Text style={[styles.heroName, { color: theme.text }]}>{user?.name}</Text>
+              <Icon name="create-outline" size={16} color={theme.textSecondary} />
+            </Pressable>
+          )}
           <Text style={[styles.heroEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
 
           {/* Tier pill */}
@@ -314,7 +374,11 @@ const styles = StyleSheet.create({
   avatar:            { width: 90, height: 90, borderRadius: 45 },
   avatarInitial:     { color: '#fff', fontSize: 36, fontWeight: '800' },
   avatarEditBadge:   { position: 'absolute', bottom: 2, right: 2, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
+  nameRow:           { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroName:          { fontSize: 22, fontWeight: '800' },
+  nameEditRow:       { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%', paddingHorizontal: Spacing.two },
+  nameInput:         { flex: 1, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  nameEditBtn:       { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   heroEmail:         { fontSize: 14, marginTop: -4 },
   tierPill:          { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1.5 },
   tierPillText:      { fontSize: 12, fontWeight: '700' },
