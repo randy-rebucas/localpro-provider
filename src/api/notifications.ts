@@ -28,3 +28,7 @@ export async function markAllRead(): Promise<void> {
 export async function markOneRead(id: string): Promise<void> {
   await api.patch(`/api/notifications/${id}`);
 }
+
+export async function registerPushToken(expoPushToken: string): Promise<void> {
+  await api.post('/api/notifications/register-token', { token: expoPushToken });
+}

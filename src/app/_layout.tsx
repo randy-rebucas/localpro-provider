@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 import { getMe } from '@/api/auth';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
 import { APPROVAL_STATUS_KEY, useAuthStore } from '@/stores/auth-store';
 
 const queryClient = new QueryClient({
@@ -21,6 +22,8 @@ function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
   const { user, isLoading, setUser, clearUser } = useAuthStore();
+
+  usePushNotifications();
 
   useEffect(() => {
     async function bootstrap() {

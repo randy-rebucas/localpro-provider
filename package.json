@@ -4,11 +4,22 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "build:dev:android": "eas build --profile development --platform android",
+    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:preview:ios": "eas build --profile preview --platform ios",
+    "build:android": "eas build --profile production --platform android",
+    "build:ios": "eas build --profile production --platform ios",
+    "build:all": "eas build --profile production --platform all",
+    "submit:android": "eas submit --profile production --platform android",
+    "submit:ios": "eas submit --profile production --platform ios",
+    "update": "eas update --auto",
+    "reset-project": "node ./scripts/reset-project.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
