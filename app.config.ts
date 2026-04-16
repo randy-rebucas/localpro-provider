@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: 'localproprovider',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
-
+  
   /* ── Icons ─────────────────────────────────────────────────── */
   icon: './assets/images/icon.png',
 
@@ -51,12 +51,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     permissions: [
       'android.permission.CAMERA',
       'android.permission.READ_MEDIA_IMAGES',
-      'android.permission.READ_MEDIA_VIDEO',
-      'android.permission.READ_EXTERNAL_STORAGE',
-      'android.permission.WRITE_EXTERNAL_STORAGE',
       'android.permission.VIBRATE',
       'android.permission.RECEIVE_BOOT_COMPLETED',
-      'android.permission.USE_EXACT_ALARM',
     ],
     softwareKeyboardLayoutMode: 'pan',
   },
@@ -123,14 +119,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     policy: 'appVersion',
   },
   updates: {
-    url: `https://u.expo.dev/${process.env.EAS_PROJECT_ID ?? 'YOUR_EAS_PROJECT_ID'}`,
+    url: 'https://u.expo.dev/1f6e3a93-8371-46bd-899e-5c8ae75540b5',
     fallbackToCacheTimeout: 0,
   },
 
-  /* ── EAS extra ─────────────────────────────────────────────── */
+  /* ── EAS ────────────────────────────────────────────────────── */
+  owner: 'randyreb',
   extra: {
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? 'YOUR_EAS_PROJECT_ID',
+      projectId: '1f6e3a93-8371-46bd-899e-5c8ae75540b5',
     },
   },
 });
