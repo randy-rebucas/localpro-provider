@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { sendPhoneOtp, verifyPhoneOtp } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
@@ -64,6 +65,7 @@ export default function PhoneLoginScreen() {
             <Text style={[styles.backText, { color: Primary[500] }]}>← Back</Text>
           </Pressable>
 
+          <AppLogo size={72} />
           <Text style={[styles.title, { color: theme.text }]}>
             {step === 'phone' ? 'Phone Sign In' : 'Enter OTP'}
           </Text>
@@ -154,12 +156,12 @@ export default function PhoneLoginScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
-  container: { flex: 1, padding: Spacing.four },
-  backBtn: { marginBottom: Spacing.four },
+  container: { flex: 1, padding: Spacing.four, alignItems: 'center' },
+  backBtn: { marginBottom: Spacing.four, alignSelf: 'flex-start' },
   backText: { fontSize: 15, fontWeight: '600' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one },
-  subtitle: { fontSize: 15, marginBottom: Spacing.four },
-  form: { gap: Spacing.three },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one, textAlign: 'center' },
+  subtitle: { fontSize: 15, marginBottom: Spacing.four, textAlign: 'center' },
+  form: { gap: Spacing.three, width: '100%' },
   input: {
     borderRadius: 12,
     paddingHorizontal: Spacing.three,

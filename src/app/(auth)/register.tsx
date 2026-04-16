@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { register } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { Colors, Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -86,6 +87,7 @@ export default function RegisterScreen() {
           </Pressable>
 
           <View style={styles.header}>
+            <AppLogo size={72} />
             <Text style={[styles.title, { color: theme.text }]}>Create account</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               Join LocalPro as a service provider
@@ -174,9 +176,9 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, padding: Spacing.four },
   backBtn: { marginBottom: Spacing.three },
   backText: { fontSize: 15, fontWeight: '600' },
-  header: { marginBottom: Spacing.four, gap: Spacing.one },
-  title: { fontSize: 28, fontWeight: '700' },
-  subtitle: { fontSize: 15 },
+  header: { marginBottom: Spacing.four, gap: Spacing.one, alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
+  subtitle: { fontSize: 15, textAlign: 'center' },
   form: { gap: Spacing.three },
   field: { gap: Spacing.one },
   label: { fontSize: 14, fontWeight: '500' },

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { login } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { Colors, Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -59,7 +60,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <View style={[styles.logoMark, { backgroundColor: Primary[500] }]} />
+            <AppLogo size={80} />
             <Text style={[styles.title, { color: theme.text }]}>Welcome back</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               Sign in to your LocalPro provider account
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, padding: Spacing.four, justifyContent: 'center' },
   header: { alignItems: 'center', marginBottom: Spacing.five, gap: Spacing.two },
-  logoMark: { width: 56, height: 56, borderRadius: 16, marginBottom: Spacing.two },
+  logoMark: { marginBottom: Spacing.two },
   title: { fontSize: 28, fontWeight: '700' },
   subtitle: { fontSize: 15, textAlign: 'center' },
   form: { gap: Spacing.three },

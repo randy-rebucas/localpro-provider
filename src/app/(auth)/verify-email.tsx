@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '@/api/client';
+import { AppLogo } from '@/components/app-logo';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -31,6 +32,7 @@ export default function VerifyEmailScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
+        <AppLogo size={72} />
         {status === 'loading' && (
           <>
             <ActivityIndicator size="large" color={Primary[500]} />

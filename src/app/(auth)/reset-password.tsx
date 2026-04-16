@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { resetPassword } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -69,6 +70,7 @@ export default function ResetPasswordScreen() {
           </View>
         ) : (
           <>
+            <AppLogo size={72} />
             <Text style={[styles.title, { color: theme.text }]}>Reset password</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               Enter your new password below.
@@ -115,10 +117,10 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  container: { flex: 1, padding: Spacing.four, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one },
-  subtitle: { fontSize: 15, marginBottom: Spacing.four },
-  form: { gap: Spacing.three },
+  container: { flex: 1, padding: Spacing.four, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one, textAlign: 'center' },
+  subtitle: { fontSize: 15, marginBottom: Spacing.four, textAlign: 'center' },
+  form: { gap: Spacing.three, width: '100%' },
   field: { gap: Spacing.one },
   label: { fontSize: 14, fontWeight: '500' },
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 4, fontSize: 16 },

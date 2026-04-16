@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { logout } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { Icon } from '@/components/icon';
 import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,6 +21,8 @@ export function PendingApprovalGate() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
+        <AppLogo size={80} />
+
         <View style={[styles.iconWrap, { backgroundColor: Status.warningBg }]}>
           <Icon name="time" size={44} color={Status.warning} />
         </View>

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { forgotPassword } from '@/api/auth';
+import { AppLogo } from '@/components/app-logo';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -60,6 +61,7 @@ export default function ForgotPasswordScreen() {
           </View>
         ) : (
           <>
+            <AppLogo size={72} />
             <Text style={[styles.title, { color: theme.text }]}>Forgot password</Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               Enter your email and we'll send a reset link.
@@ -103,12 +105,12 @@ export default function ForgotPasswordScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  container: { flex: 1, padding: Spacing.four },
-  backBtn: { marginBottom: Spacing.four },
+  container: { flex: 1, padding: Spacing.four, alignItems: 'center' },
+  backBtn: { marginBottom: Spacing.four, alignSelf: 'flex-start' },
   backText: { fontSize: 15, fontWeight: '600' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one },
-  subtitle: { fontSize: 15, marginBottom: Spacing.four },
-  form: { gap: Spacing.three },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: Spacing.one, textAlign: 'center' },
+  subtitle: { fontSize: 15, marginBottom: Spacing.four, textAlign: 'center' },
+  form: { gap: Spacing.three, width: '100%' },
   input: {
     borderRadius: 12,
     paddingHorizontal: Spacing.three,
