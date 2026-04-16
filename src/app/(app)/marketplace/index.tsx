@@ -103,6 +103,7 @@ export default function MarketplaceScreen() {
         status: 'open',
         category: category !== 'All' ? category : undefined,
         aiRank,
+        limit: 50,
       }),
   });
 
@@ -114,10 +115,6 @@ export default function MarketplaceScreen() {
       j.location.toLowerCase().includes(search.toLowerCase()),
   );
   const sorted = [...filtered].sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0));
-
-  const activeCount = category !== 'All'
-    ? sorted.length
-    : undefined;
 
   const aiToggle = (
     <Pressable
@@ -175,6 +172,23 @@ export default function MarketplaceScreen() {
           );
         })}
       </ScrollView>
+
+      {/* Result count */}
+      {!isLoading && (
+        <View style={styles.resultRow}>
+          <Text style={[styles.resultText, { color: theme.textSecondary }]}>
+            {sorted.length} {sorted.length === 1 ? 'job' : 'jobs'} found
+            {search ? ` for "${search}"` : ''}
+            {category !== 'All' ? ` in ${category}` : ''}
+          </Text>
+          {aiRank && (
+            <View style={[styles.aiActiveBadge, { backgroundColor: Primary[50] }]}>
+              <Icon name="flash" size={11} color={Primary[500]} />
+              <Text style={[styles.aiActiveBadgeText, { color: Primary[500] }]}>AI Ranked</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* List */}
       {isLoading ? (
@@ -255,6 +269,10 @@ const styles = StyleSheet.create({
     marginLeft:      1,
   },
   catText: { fontSize: 13, fontWeight: '600' },
+  resultRow:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.four, paddingVertical: Spacing.one, marginBottom: 2 },
+  resultText:        { fontSize: 12, fontWeight: '500' },
+  aiActiveBadge:     { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+  aiActiveBadgeText: { fontSize: 11, fontWeight: '700' },
   list: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset },
   skeletons: { padding: Spacing.four, gap: Spacing.three },
   card: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },

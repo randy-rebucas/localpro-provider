@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getThreads, type Thread } from '@/api/messages';
@@ -14,11 +14,15 @@ function ThreadRow({ thread, onPress }: { thread: Thread; onPress: () => void })
   const theme = useTheme();
   return (
     <Pressable style={[styles.row, { backgroundColor: theme.backgroundElement }]} onPress={onPress}>
-      <View style={[styles.avatar, { backgroundColor: Primary[100] }]}>
-        <Text style={[styles.avatarText, { color: Primary[700] }]}>
-          {thread.otherParty.name.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+      {thread.otherParty.avatar ? (
+        <Image source={{ uri: thread.otherParty.avatar }} style={styles.avatar} />
+      ) : (
+        <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: Primary[100] }]}>
+          <Text style={[styles.avatarText, { color: Primary[700] }]}>
+            {thread.otherParty.name.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
       <View style={styles.rowContent}>
         <View style={styles.rowTop}>
           <Text style={[styles.name, { color: theme.text }]}>{thread.otherParty.name}</Text>
@@ -48,10 +52,15 @@ export default function MessagesScreen() {
   const theme = useTheme();
   const router = useRouter();
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data: rawThreads, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['threads'],
     queryFn: getThreads,
+    staleTime: 1000 * 30,
   });
+
+  const data = [...(rawThreads ?? [])].sort((a, b) =>
+    b.lastMessageAt.localeCompare(a.lastMessageAt),
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -91,8 +100,9 @@ const styles = StyleSheet.create({
   skeletons: { padding: Spacing.four, gap: Spacing.three },
   list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset },
   row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', gap: Spacing.three },
-  avatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 20, fontWeight: '700' },
+  avatar:         { width: 48, height: 48, borderRadius: 24 },
+  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
+  avatarText:     { fontSize: 20, fontWeight: '700' },
   rowContent: { flex: 1, gap: 3 },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between' },
   name: { fontSize: 15, fontWeight: '700' },

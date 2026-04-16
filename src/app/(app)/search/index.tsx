@@ -11,35 +11,35 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getJobs, type Job } from '@/api/jobs';
+import { api } from '@/api/client';
+import { type Job } from '@/api/jobs';
 import { AppHeader } from '@/components/app-header';
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+interface SearchResult { type: 'job' | 'user' | 'provider'; [key: string]: any }
+
+async function searchJobs(q: string): Promise<Job[]> {
+  const { data } = await api.get<{ results: SearchResult[] }>('/api/search', { params: { q } });
+  return (data.results ?? []).filter((r) => r.type === 'job') as unknown as Job[];
+}
 
 export default function SearchScreen() {
   const theme  = useTheme();
   const router = useRouter();
   const [query, setQuery] = useState('');
 
-  const { data: rawJobs, isLoading } = useQuery({
-    queryKey: ['jobs-search', query],
-    queryFn:  () => getJobs({ status: 'open', limit: 50 }),
+  const trimmed = query.trim();
+  const { data: results, isLoading } = useQuery({
+    queryKey: ['search', trimmed],
+    queryFn:  () => searchJobs(trimmed),
     staleTime: 1000 * 60,
-    enabled: true,
+    enabled: trimmed.length >= 2,
   });
 
-  const allJobs: Job[] = Array.isArray(rawJobs) ? rawJobs : [];
-  const filtered = query.trim().length === 0
-    ? allJobs
-    : allJobs.filter(
-        (j) =>
-          j.title.toLowerCase().includes(query.toLowerCase()) ||
-          j.category.toLowerCase().includes(query.toLowerCase()) ||
-          j.location.toLowerCase().includes(query.toLowerCase()) ||
-          j.description.toLowerCase().includes(query.toLowerCase()),
-      );
+  const filtered: Job[] = results ?? [];
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -65,7 +65,15 @@ export default function SearchScreen() {
         )}
       </View>
 
-      {isLoading ? (
+      {trimmed.length < 2 ? (
+        <View style={styles.empty}>
+          <Icon name="search-outline" size={48} color={theme.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Search LocalPro</Text>
+          <Text style={[styles.emptyHint, { color: theme.textSecondary }]}>
+            Type at least 2 characters to search jobs, providers, and more.
+          </Text>
+        </View>
+      ) : isLoading ? (
         <View style={styles.skeletons}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
         </View>
@@ -76,15 +84,9 @@ export default function SearchScreen() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            query.trim().length > 0 ? (
-              <Text style={[styles.resultCount, { color: theme.textSecondary }]}>
-                {filtered.length} result{filtered.length !== 1 ? 's' : ''} for "{query}"
-              </Text>
-            ) : (
-              <Text style={[styles.resultCount, { color: theme.textSecondary }]}>
-                {allJobs.length} open jobs available
-              </Text>
-            )
+            <Text style={[styles.resultCount, { color: theme.textSecondary }]}>
+              {filtered.length} result{filtered.length !== 1 ? 's' : ''} for "{trimmed}"
+            </Text>
           }
           ListEmptyComponent={
             <View style={styles.empty}>

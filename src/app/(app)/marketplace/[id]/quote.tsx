@@ -5,6 +5,7 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { Icon } from '@/components/icon';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -85,7 +86,12 @@ export default function SubmitQuoteScreen() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['quoted-job-ids'] });
+      qc.invalidateQueries({ queryKey: ['quoted-jobs'] });
       router.back();
+    },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? 'Could not submit quote. Please try again.';
+      Alert.alert('Submission Failed', msg);
     },
   });
 
@@ -268,12 +274,6 @@ export default function SubmitQuoteScreen() {
             </View>
           ))}
 
-          {mutation.isError && (
-            <Text style={styles.submitError}>
-              Failed to submit quote. Please try again.
-            </Text>
-          )}
-
           <Pressable
             style={[styles.submitBtn, { backgroundColor: Primary[500] }, mutation.isPending && styles.btnDisabled]}
             onPress={handleSubmit((v) => mutation.mutate(v))}
@@ -282,7 +282,10 @@ export default function SubmitQuoteScreen() {
             {mutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitBtnText}>Submit Quote</Text>
+              <>
+                <Icon name="send-outline" size={16} color="#fff" />
+                <Text style={styles.submitBtnText}>Submit Quote</Text>
+              </>
             )}
           </Pressable>
         </ScrollView>
@@ -328,8 +331,7 @@ const styles = StyleSheet.create({
   },
   msInput: { flex: 1, fontSize: 14 },
   msAmount: { width: 80, fontSize: 14, textAlign: 'right' },
-  submitError: { color: Status.error, fontSize: 13, textAlign: 'center' },
-  submitBtn: { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
+  submitBtn:     { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: Spacing.two },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
   error: { color: Status.error, fontSize: 12 },

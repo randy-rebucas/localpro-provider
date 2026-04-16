@@ -146,7 +146,7 @@ export default function CertificationsScreen() {
           const showExpiredLabel = expired && !prevExpired && expiredCerts.length > 0;
 
           return (
-            <>
+            <View>
               {showExpiredLabel && (
                 <Text style={[styles.sectionLabel, { color: theme.textSecondary, marginTop: Spacing.two }]}>EXPIRED</Text>
               )}
@@ -213,7 +213,7 @@ export default function CertificationsScreen() {
                   </View>
                 </View>
               </View>
-            </>
+            </View>
           );
         }}
       />

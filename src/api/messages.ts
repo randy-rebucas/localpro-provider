@@ -54,7 +54,7 @@ function normaliseThread(raw: RawThread): Thread {
   };
 }
 
-function normaliseMessage(raw: RawMessage, threadId: string): Message {
+export function normaliseMessage(raw: RawMessage, threadId: string): Message {
   return {
     id: raw._id ?? raw.id ?? String(Math.random()),
     threadId: raw.threadId ?? threadId,

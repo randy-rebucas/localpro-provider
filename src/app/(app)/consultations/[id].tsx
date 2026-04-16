@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Alert,
-  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -38,7 +37,6 @@ export default function ConsultationDetailScreen() {
   const [body,  setBody]  = useState('');
   const [estAmt, setEstAmt] = useState('');
   const [estNote, setEstNote] = useState('');
-  const listRef = useRef<FlatList>(null);
 
   const { data: consultation, isLoading } = useQuery({
     queryKey: ['consultation', id],
@@ -72,7 +70,6 @@ export default function ConsultationDetailScreen() {
     onSuccess: () => {
       setBody('');
       refetchMsgs();
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     },
     onError: () => Alert.alert('Error', 'Could not send message.'),
   });

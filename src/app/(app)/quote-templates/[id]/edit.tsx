@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -98,7 +99,7 @@ export default function EditTemplateScreen() {
 
         {isLoading ? (
           <View style={styles.center}>
-            <Text style={[{ color: theme.textSecondary }]}>Loading…</Text>
+            <ActivityIndicator size="large" color={Primary[500]} />
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

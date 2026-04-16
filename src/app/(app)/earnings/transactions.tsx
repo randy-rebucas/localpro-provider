@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 const TX_ICONS: Record<string, IconName> = {
   escrow_released: 'cash-outline',
   commission:      'bar-chart-outline',
-  withdrawal:      'business-outline',
+  withdrawal:      'arrow-up-circle-outline',
   referral_bonus:  'gift-outline',
 };
 

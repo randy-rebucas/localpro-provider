@@ -9,27 +9,22 @@ import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useEarningsStore } from '@/stores/earnings-store';
 
 const TX_ICONS: Record<string, IconName> = {
   escrow_released: 'cash-outline',
   commission:      'bar-chart-outline',
-  withdrawal:      'business-outline',
+  withdrawal:      'arrow-up-circle-outline',
   referral_bonus:  'gift-outline',
 };
 
 export default function EarningsScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const setBalance = useEarningsStore((s) => s.setBalance);
 
   const { data: wallet, isLoading: walletLoading, refetch, isRefetching } = useQuery({
     queryKey: ['wallet'],
-    queryFn: async () => {
-      const w = await getWallet();
-      setBalance(w.balance);
-      return w;
-    },
+    queryFn:  getWallet,
+    staleTime: 1000 * 60,
   });
 
   const { data: rawTxns, isLoading: txLoading } = useQuery({
@@ -60,6 +55,7 @@ export default function EarningsScreen() {
             style={[styles.withdrawBtn, { backgroundColor: '#fff' }]}
             onPress={() => router.push('/(app)/earnings/withdraw')}
           >
+            <Icon name="arrow-up-circle-outline" size={15} color={Primary[600]} />
             <Text style={[styles.withdrawBtnText, { color: Primary[600] }]}>Withdraw to Bank</Text>
           </Pressable>
         </View>
@@ -117,7 +113,7 @@ export default function EarningsScreen() {
         ) : txns.length === 0 ? (
           <Text style={[styles.emptyTx, { color: theme.textSecondary }]}>No transactions yet.</Text>
         ) : (
-          txns.slice(0, 5).map((tx) => (
+          txns.map((tx) => (
             <View key={tx.id} style={[styles.txRow, { backgroundColor: theme.backgroundElement }]}>
               <Icon
                 name={TX_ICONS[tx.type] ?? 'card-outline'}
@@ -148,7 +144,7 @@ const styles = StyleSheet.create({
   balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
   balanceAmount: { color: '#fff', fontSize: 36, fontWeight: '800' },
   balanceSkeleton: { height: 40, borderRadius: 8, width: '60%' },
-  withdrawBtn: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: Spacing.four, alignSelf: 'flex-start', marginTop: Spacing.one },
+  withdrawBtn: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: Spacing.four, alignSelf: 'flex-start', marginTop: Spacing.one, flexDirection: 'row', alignItems: 'center', gap: 5 },
   withdrawBtnText: { fontSize: 14, fontWeight: '700' },
   summaryRow: { flexDirection: 'row', gap: Spacing.two },
   summaryCard: { flex: 1, borderRadius: 14, padding: Spacing.three, gap: 4 },

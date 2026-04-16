@@ -7,6 +7,7 @@ import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useNotificationStore } from '@/stores/notification-store';
 
 const TYPE_ICON: Record<string, IconName> = {
   job_assigned:     'briefcase-outline',
@@ -53,10 +54,13 @@ function NotifRow({ notif, onPress }: { notif: AppNotification; onPress: () => v
 export default function NotificationsScreen() {
   const theme = useTheme();
   const qc = useQueryClient();
+  const storeMarkAllRead = useNotificationStore((s) => s.markAllRead);
+  const storeMarkRead    = useNotificationStore((s) => s.markRead);
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
+    staleTime: 1000 * 30,
   });
 
   const notifications = data?.notifications ?? [];
@@ -64,12 +68,18 @@ export default function NotificationsScreen() {
 
   const markAll = useMutation({
     mutationFn: markAllRead,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: () => {
+      storeMarkAllRead();
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 
   const markOne = useMutation({
     mutationFn: markOneRead,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+    onSuccess: (_data, id) => {
+      storeMarkRead(id);
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    },
   });
 
   return (

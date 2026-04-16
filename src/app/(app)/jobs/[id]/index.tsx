@@ -1,7 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,7 +30,6 @@ export default function JobDetailScreen() {
   const theme  = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const qc     = useQueryClient();
 
   const { data: job, isLoading, isError } = useQuery({
     queryKey: ['job', id],
@@ -95,11 +93,14 @@ export default function JobDetailScreen() {
 
         {/* Details */}
         <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-          <InfoRow label="Category"    value={job.category} />
-          <InfoRow label="Status"      value={job.status} />
-          <InfoRow label="Escrow"      value={job.escrowStatus ?? '—'} />
-          {job.scheduleDate && <InfoRow label="Schedule"   value={new Date(job.scheduleDate).toLocaleDateString()} />}
-          <InfoRow label="Posted"      value={new Date(job.createdAt).toLocaleDateString()} />
+          <InfoRow label="Category" value={job.category} />
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Status</Text>
+            <StatusChip status={job.status} />
+          </View>
+          <InfoRow label="Escrow"   value={job.escrowStatus?.replace(/_/g, ' ') ?? '—'} />
+          {job.scheduleDate && <InfoRow label="Schedule" value={new Date(job.scheduleDate).toLocaleDateString()} />}
+          <InfoRow label="Posted"   value={new Date(job.createdAt).toLocaleDateString()} />
         </View>
 
         {/* Description */}

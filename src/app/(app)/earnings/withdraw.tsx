@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Icon } from '@/components/icon';
 import { Controller, useForm } from 'react-hook-form';
@@ -33,6 +33,7 @@ type FormData = z.infer<typeof schema>;
 export default function WithdrawScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const qc    = useQueryClient();
 
   const { data: wallet } = useQuery({ queryKey: ['wallet'], queryFn: getWallet });
 
@@ -48,7 +49,10 @@ export default function WithdrawScreen() {
         accountNumber: v.accountNumber,
         accountName:   v.accountName,
       }),
-    onSuccess: () => router.back(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wallet'] });
+      router.back();
+    },
   });
 
   const inputStyle = [styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }];
@@ -169,7 +173,10 @@ export default function WithdrawScreen() {
             {mutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Request Withdrawal</Text>
+              <>
+                <Icon name="arrow-up-circle-outline" size={18} color="#fff" />
+                <Text style={styles.btnText}>Request Withdrawal</Text>
+              </>
             )}
           </Pressable>
         </ScrollView>
@@ -197,7 +204,7 @@ const styles = StyleSheet.create({
   error: { color: Status.error, fontSize: 12 },
   submitError: { color: Status.error, fontSize: 13, textAlign: 'center' },
   submitSuccess: { color: Status.success, fontSize: 13, textAlign: 'center' },
-  btn: { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', marginTop: Spacing.two },
+  btn: { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: Spacing.two },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },
 });

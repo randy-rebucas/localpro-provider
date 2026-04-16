@@ -50,6 +50,7 @@ export default function JobsScreen() {
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['my-jobs', activeTab],
     queryFn: () => getMyJobs({ status: activeTab }),
+    staleTime: 1000 * 30,
   });
 
   return (
@@ -104,7 +105,7 @@ export default function JobsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  tabStrip: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'transparent', paddingHorizontal: Spacing.four },
+  tabStrip: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.1)', paddingHorizontal: Spacing.four },
   tabBtn: { flex: 1, alignItems: 'center', paddingVertical: Spacing.two },
   tabLabel: { fontSize: 13, fontWeight: '600' },
   skeletons: { padding: Spacing.four, gap: Spacing.three },

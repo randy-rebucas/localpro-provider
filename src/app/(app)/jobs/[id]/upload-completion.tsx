@@ -42,7 +42,7 @@ export default function UploadCompletionScreen() {
   });
 
   async function pickPhoto() {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.85,
