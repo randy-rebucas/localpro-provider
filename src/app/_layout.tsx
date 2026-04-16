@@ -3,8 +3,10 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
+import * as SecureStore from 'expo-secure-store';
+
 import { getMe } from '@/api/auth';
-import { isProviderApproved, useAuthStore } from '@/stores/auth-store';
+import { APPROVAL_STATUS_KEY, useAuthStore } from '@/stores/auth-store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,17 +20,21 @@ const queryClient = new QueryClient({
 function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
-  const { user, isLoading, setUser, clearUser, setLoading } = useAuthStore();
+  const { user, isLoading, setUser, clearUser } = useAuthStore();
 
   useEffect(() => {
     async function bootstrap() {
       try {
-        const me = await getMe();
+        const [me, savedStatus] = await Promise.all([
+          getMe(),
+          SecureStore.getItemAsync(APPROVAL_STATUS_KEY),
+        ]);
         if (me.role !== 'provider') {
           clearUser();
           return;
         }
-        setUser(me);
+        // getMe() doesn't return approvalStatus — restore from last login via SecureStore
+        setUser({ ...me, approvalStatus: me.approvalStatus ?? savedStatus ?? null });
       } catch {
         clearUser();
       }
@@ -36,21 +42,29 @@ function AuthGuard() {
     bootstrap();
   }, []);
 
+  const inAuth    = segments[0] === '(auth)';
+  const onPending = segments[1] === 'pending-approval';
+  const approved  = user?.approvalStatus === 'approved';
+
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuth = segments[0] === '(auth)';
-
-    if (!user && !inAuth) {
-      router.replace('/(auth)/login');
-    } else if (user && inAuth) {
-      if (user.approvalStatus === 'pending' || user.approvalStatus === 'rejected') {
-        router.replace('/(auth)/pending-approval');
-      } else {
-        router.replace('/(app)');
-      }
+    if (!user) {
+      if (!inAuth) router.replace('/(auth)/login');
+      return;
     }
-  }, [user, isLoading, segments]);
+
+    // Not approved — keep inside auth group on the pending screen
+    if (!approved) {
+      if (!onPending) router.replace('/(auth)/pending-approval');
+      return;
+    }
+
+    // Approved — move out of auth into the app
+    if (inAuth) {
+      router.replace('/(app)');
+    }
+  }, [user, isLoading, inAuth, approved, onPending]);
 
   if (isLoading) {
     return (

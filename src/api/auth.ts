@@ -7,7 +7,7 @@ export interface AuthUser {
   role: string;
   avatar: string | null;
   isVerified: boolean;
-  approvalStatus: string;   // "pending" | "approved" | "rejected"
+  approvalStatus: string | null;   // "pending" | "approved" | "rejected" | null = unknown (not yet fetched)
   isSuspended?: boolean;
   kycStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   phone?: string | null;
@@ -61,7 +61,7 @@ function normaliseUser(raw: Record<string, any>): AuthUser {
     role:           raw.role,
     avatar:         raw.avatar ?? null,
     isVerified:     raw.isVerified ?? raw.isEmailVerified ?? false,
-    approvalStatus: raw.approvalStatus ?? 'approved',
+    approvalStatus: raw.approvalStatus ?? null,
     isSuspended:    raw.isSuspended ?? false,
     kycStatus:      raw.kycStatus ?? 'none',
     phone:          raw.phone ?? null,
@@ -76,9 +76,7 @@ function calcCompletionPercent(raw: Record<string, any>): number {
   const checks = [
     !!raw.bio?.trim(),
     (raw.skills?.length ?? 0) > 0,
-    (raw.portfolioItems?.length ?? 0) > 0,
     (raw.serviceAreas?.length ?? 0) > 0,
-    (raw.certifications?.length ?? 0) > 0,
     raw.hourlyRate != null,
     (raw.yearsExperience ?? 0) > 0,
     !!raw.userId?.avatar,

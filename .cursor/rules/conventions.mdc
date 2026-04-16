@@ -1,0 +1,37 @@
+---
+description: Coding conventions, API patterns, and component standards for localpro-provider
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Conventions — localpro-provider
+
+## API calls
+- All HTTP goes through `src/api/client.ts` (Axios instance). Never use raw `fetch` for app data.
+- Add new domain calls to the matching module in `src/api/` (e.g. `jobs.ts`, `messages.ts`).
+- Normalise raw API shapes into typed interfaces inside the API module — screens consume the typed interface, not raw JSON.
+- Query keys: use descriptive arrays, e.g. `['jobs', jobId]`, `['provider-profile']`.
+
+## State management
+- **Server state** → TanStack Query (`useQuery` / `useMutation`). Don't store server data in Zustand.
+- **Session / UI state** → Zustand stores in `src/stores/`.
+- Invalidate related query keys after mutations: `queryClient.invalidateQueries({ queryKey: ['...'] })`.
+
+## Forms
+- Always use `react-hook-form` + `zod` schema + `zodResolver`.
+- Define the Zod schema at top of file; infer the form type from it.
+
+## Components
+- Use `ThemedText` / `ThemedView` (from `src/components/`) for theme-aware text and containers.
+- Use `useTheme()` from `src/hooks/use-theme` for colours inside style objects.
+- Use `Icon` (`src/components/icon.tsx`) with `IconName` for all Ionicons.
+- Provide `EmptyState` for empty lists; `LoadingSkeleton` for loading states.
+
+## Styling
+- All colours from `Colors`, `Primary`, `Status` in `src/constants/theme.ts`. No hardcoded hex values.
+- Use `StyleSheet.create` for static styles; inline only for truly dynamic values.
+
+## File conventions
+- Screens live in `src/app/`. Components live in `src/components/`. No UI code in `src/api/`.
+- Platform splits: add `.web.tsx` / `.web.ts` variants when native and web behaviour diverge.
+- Layouts (`_layout.tsx`) only handle navigation structure — no business logic.

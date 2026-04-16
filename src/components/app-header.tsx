@@ -7,8 +7,9 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { getMe, getProviderProfile } from '@/api/auth';
 import { getNotifications } from '@/api/notifications';
 import { Icon } from '@/components/icon';
 import { Primary, Spacing } from '@/constants/theme';
@@ -28,13 +29,24 @@ export function AppHeader({ title, left, right }: AppHeaderProps) {
   const router = useRouter();
   const user   = useAuthStore((s) => s.user);
 
-  const { data } = useQuery({
+  const { data: notifData } = useQuery({
     queryKey: ['notifications'],
     queryFn:  getNotifications,
     staleTime: 1000 * 30,
   });
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn:  getMe,
+    staleTime: 1000 * 60 * 5,
+  });
+  const { data: profile } = useQuery({
+    queryKey: ['provider-profile'],
+    queryFn:  getProviderProfile,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  const unreadCount = data?.unreadCount ?? 0;
+  const unreadCount = notifData?.unreadCount ?? 0;
+  const avatarUrl   = me?.avatar ?? profile?.userId?.avatar ?? user?.avatar;
 
   return (
     <View style={[styles.bar, { borderBottomColor: theme.backgroundElement }]}>
@@ -72,13 +84,17 @@ export function AppHeader({ title, left, right }: AppHeaderProps) {
 
         {/* Profile avatar */}
         <Pressable
-          style={[styles.avatar, { backgroundColor: Primary[500] }]}
+          style={[styles.avatar, !avatarUrl && { backgroundColor: Primary[500] }]}
           onPress={() => router.push('/(app)/profile')}
           hitSlop={8}
         >
-          <Text style={styles.avatarInitial}>
-            {user?.name?.charAt(0).toUpperCase() ?? 'P'}
-          </Text>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+          ) : (
+            <Text style={styles.avatarInitial}>
+              {user?.name?.charAt(0).toUpperCase() ?? 'P'}
+            </Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -121,6 +137,8 @@ const styles = StyleSheet.create({
     borderRadius:   18,
     alignItems:     'center',
     justifyContent: 'center',
+    overflow:       'hidden',
   },
+  avatarImg:     { width: 36, height: 36, borderRadius: 18 },
   avatarInitial: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

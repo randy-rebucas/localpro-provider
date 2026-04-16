@@ -1,0 +1,52 @@
+---
+description: Project overview, stack, architecture, and screen map for localpro-provider
+alwaysApply: true
+---
+
+# localpro-provider — Project Memory
+
+## What it is
+Expo Router provider-side mobile app (iOS, Android, Web) for **LocalPro Asia** (`localpro.asia`). Providers browse jobs, submit quotes, manage earnings, chat with clients, and maintain their profile/KYC.
+
+## Stack
+- **Expo SDK 54**, React 19, React Native 0.81.5, TypeScript (strict)
+- **expo-router v6** — file-based routing, typed routes, React Compiler experiment enabled
+- **TanStack Query** — all server state, caching, mutations
+- **Zustand** — auth session (`auth-store`), notifications badge (`notification-store`), earnings cache (`earnings-store`)
+- **Axios** (`src/api/client.ts`) — cookie sessions, CSRF on mutations, auto-refresh on 401
+- **react-hook-form + zod** — all validated forms
+- **react-native-sse** — SSE for live message threads
+- **expo-secure-store** — only for training checkout session keys
+
+## Key directories
+| Path | Role |
+|------|------|
+| `src/app/(auth)/` | Auth screens (login, register, phone, forgot/reset pw, verify email, pending approval) |
+| `src/app/(app)/` | Main tab shell + all feature stacks |
+| `src/api/` | Axios client + domain modules (auth, jobs, messages, quotes, earnings, etc.) |
+| `src/stores/` | Zustand stores |
+| `src/components/` | Shared UI (themed-text/view, icon, app-header, empty-state, loading-skeleton, status-chip) |
+| `src/constants/theme.ts` | `Colors`, `Primary`, `Status`, spacing — single source of truth for styling |
+| `src/hooks/` | `use-theme`, `use-color-scheme` (+ `.web` override) |
+
+## Navigation structure
+- Root `_layout.tsx` → `QueryClientProvider` + `AuthGuard` → `<Slot />`
+- `(auth)` → Stack, no headers
+- `(app)` → **5 visible tabs**: Home, Market(place), Jobs, Wallet, Chat
+- Hidden tab entries (`href: null`) for: quotes, notifications, support, consultations, quote-templates, profile, loyalty, announcements, search
+
+## Auth flow
+1. Bootstrap: `GET /api/auth/me` → set user in Zustand or redirect to login
+2. Role check: must be provider; `approvalStatus` must be `'approved'` (defaults to approved if missing from API)
+3. Guard re-runs on `AppState → 'active'`
+4. Session via HTTP-only cookies (`withCredentials: true`) — no manual token handling
+5. CSRF: `GET /api/auth/csrf` → `x-csrf-token` header on all mutations
+6. 401 → auto-refresh via `POST /api/auth/refresh`, failed refresh clears user
+
+## Env vars
+- `EXPO_PUBLIC_API_URL` — backend base URL (default `https://www.localpro.asia`)
+- `EXPO_PUBLIC_APP_NAME` — app display name
+- Path alias: `@/*` → `src/*`
+
+## Feature screens (app group)
+`index` · `marketplace/` · `jobs/` · `earnings/` · `messages/` · `quotes/` · `quote-templates/` · `notifications/` · `support/` · `consultations/` · `loyalty/` · `announcements/` · `search/` · `profile/` (skills, service-areas, certifications, portfolio, addresses, kyc, boost, training, settings)

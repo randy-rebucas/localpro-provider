@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,15 +7,13 @@ import { Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
 
-export default function PendingApprovalScreen() {
+export function PendingApprovalGate() {
   const theme = useTheme();
-  const router = useRouter();
   const clearUser = useAuthStore((s) => s.clearUser);
 
   async function handleLogout() {
     try { await logout(); } finally {
-      clearUser();
-      router.replace('/(auth)/login');
+      clearUser(); // AuthGuard detects user === null and redirects to login
     }
   }
 
@@ -48,13 +45,6 @@ export default function PendingApprovalScreen() {
           ))}
         </View>
 
-        <Pressable
-          style={[styles.button, { backgroundColor: Primary[500] }]}
-          onPress={() => router.push('/(app)/profile')}
-        >
-          <Text style={styles.buttonText}>Complete My Profile</Text>
-        </Pressable>
-
         <Pressable style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={[styles.logoutText, { color: theme.textSecondary }]}>Sign Out</Text>
         </Pressable>
@@ -62,6 +52,8 @@ export default function PendingApprovalScreen() {
     </SafeAreaView>
   );
 }
+
+export default PendingApprovalGate;
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
@@ -79,8 +71,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '600', marginBottom: Spacing.one },
   bulletRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   bulletText: { fontSize: 14, flex: 1 },
-  button: { width: '100%', borderRadius: 12, paddingVertical: Spacing.three - 2, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   logoutBtn: { paddingVertical: Spacing.two },
   logoutText: { fontSize: 14 },
 });

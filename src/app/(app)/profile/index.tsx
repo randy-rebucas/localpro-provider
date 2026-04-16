@@ -92,7 +92,7 @@ export default function ProfileScreen() {
   const tier       = profile ? getProviderTier(profile.completedJobCount ?? 0, profile.avgRating ?? 0, profile.completionRate ?? 0) : null;
   const completion = profile?.completionPercent ?? 0;
   const kycStatus  = me?.kycStatus ?? user?.kycStatus ?? 'none';
-  const avatarUrl  = me?.avatar ?? user?.avatar;
+  const avatarUrl  = me?.avatar ?? profile?.userId?.avatar ?? user?.avatar;
 
   async function handleAvatarChange() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -108,6 +108,7 @@ export default function ProfileScreen() {
       // Single-step: POST /api/auth/me/avatar — server handles Cloudinary + saves URL
       const url = await uploadAvatar(asset.uri, asset.mimeType ?? 'image/jpeg');
       qc.invalidateQueries({ queryKey: ['me'] });
+      qc.invalidateQueries({ queryKey: ['provider-profile'] });
       if (user) setUser({ ...user, avatar: url });
     } catch {
       Alert.alert('Error', 'Could not upload avatar. Please try again.');

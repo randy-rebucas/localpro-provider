@@ -12,6 +12,7 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getMe, getProviderProfile } from '@/api/auth';
 import { api } from '@/api/client';
 import { updateMe } from '@/api/provider-profile';
 import { Icon } from '@/components/icon';
@@ -113,12 +115,26 @@ export default function SettingsScreen() {
   const qc     = useQueryClient();
   const { user, clearUser, setUser } = useAuthStore();
 
+  /* ── User / profile data (for avatar) ─────────────────────── */
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn:  getMe,
+    staleTime: 1000 * 60 * 5,
+  });
+  const { data: profile } = useQuery({
+    queryKey: ['provider-profile'],
+    queryFn:  getProviderProfile,
+    staleTime: 1000 * 60 * 5,
+  });
+  const avatarUrl = me?.avatar ?? profile?.userId?.avatar ?? user?.avatar;
+
   /* ── Notification preferences ─────────────────────────────── */
-  const { data: prefs = [], isLoading: prefsLoading } = useQuery({
+  const { data: prefsData, isLoading: prefsLoading } = useQuery({
     queryKey: ['me-preferences'],
     queryFn:  getPreferences,
     staleTime: 1000 * 60 * 5,
   });
+  const prefs: Preference[] = Array.isArray(prefsData) ? prefsData : [];
 
   // Optimistic local overrides: key = "channel:category"
   const [localOverrides, setLocalOverrides] = useState<Record<string, boolean>>({});
@@ -194,9 +210,13 @@ export default function SettingsScreen() {
 
         {/* ── Account card ───────────────────────────────── */}
         <View style={[styles.accountCard, { backgroundColor: theme.backgroundElement }]}>
-          <View style={[styles.accountAvatar, { backgroundColor: Primary[500] }]}>
-            <Text style={styles.accountInitial}>{initial}</Text>
-          </View>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.accountAvatar} />
+          ) : (
+            <View style={[styles.accountAvatar, { backgroundColor: Primary[500] }, styles.accountAvatarFallback]}>
+              <Text style={styles.accountInitial}>{initial}</Text>
+            </View>
+          )}
           <View style={{ flex: 1 }}>
             <Text style={[styles.accountName, { color: theme.text }]}>{user?.name}</Text>
             <Text style={[styles.accountEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
@@ -398,8 +418,9 @@ const styles = StyleSheet.create({
 
   /* Account card */
   accountCard:        { borderRadius: 18, padding: Spacing.three, flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginBottom: Spacing.two },
-  accountAvatar:      { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  accountInitial:     { color: '#fff', fontSize: 20, fontWeight: '800' },
+  accountAvatar:          { width: 48, height: 48, borderRadius: 24 },
+  accountAvatarFallback:  { alignItems: 'center', justifyContent: 'center' },
+  accountInitial:         { color: '#fff', fontSize: 20, fontWeight: '800' },
   accountName:        { fontSize: 15, fontWeight: '700' },
   accountEmail:       { fontSize: 13, marginTop: 1 },
   roleBadge:          { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 4 },
