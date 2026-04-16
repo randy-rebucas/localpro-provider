@@ -58,9 +58,12 @@ export default function MessagesScreen() {
     staleTime: 1000 * 30,
   });
 
-  const data = [...(rawThreads ?? [])].sort((a, b) =>
-    b.lastMessageAt.localeCompare(a.lastMessageAt),
-  );
+  const data = [...(rawThreads ?? [])].sort((a, b) => {
+    // Threads with no date (empty string) sink to the bottom
+    const aAt = a.lastMessageAt || '0';
+    const bAt = b.lastMessageAt || '0';
+    return bAt.localeCompare(aAt);
+  });
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>

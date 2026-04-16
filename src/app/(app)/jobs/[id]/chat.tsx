@@ -16,12 +16,14 @@ import { useTheme } from '@/hooks/use-theme';
 export default function JobChatScreen() {
   const theme  = useTheme();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const { data: threads, isLoading } = useQuery({
+  const { data: threads, isLoading, isError } = useQuery({
     queryKey: ['threads'],
     queryFn:  getThreads,
     staleTime: 0,
+    enabled:  !!id,
   });
 
   useEffect(() => {
@@ -49,6 +51,21 @@ export default function JobChatScreen() {
           <>
             <ActivityIndicator size="large" color={Primary[500]} />
             <Text style={[styles.hint, { color: theme.textSecondary }]}>Finding conversation…</Text>
+          </>
+        ) : isError ? (
+          <>
+            <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load messages</Text>
+            <Text style={[styles.hint, { color: theme.textSecondary }]}>
+              Check your connection and try again.
+            </Text>
+            <Pressable
+              style={[styles.btn, { backgroundColor: Primary[500] }]}
+              onPress={() => router.push('/(app)/messages')}
+            >
+              <Icon name="chatbubble-outline" size={18} color="#fff" />
+              <Text style={styles.btnText}>Open Messages</Text>
+            </Pressable>
           </>
         ) : (
           <>

@@ -18,7 +18,7 @@ import * as z from 'zod';
 
 import { createQuoteTemplate } from '@/api/quote-templates';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const schema = z.object({
@@ -96,6 +96,7 @@ export default function NewTemplateScreen() {
               <Controller control={control} name="materialsCost" render={({ field: { value, onChange, onBlur } }) => (
                 <TextInput style={inputStyle} value={value} onChangeText={onChange} onBlur={onBlur} keyboardType="numeric" placeholder="0" placeholderTextColor={theme.textSecondary} />
               )} />
+              {errors.materialsCost && <Text style={styles.err}>{errors.materialsCost.message}</Text>}
             </View>
           </View>
 
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   header:           { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:          { width: 32, alignItems: 'flex-start' },
   headerTitle:      { flex: 1, fontSize: 17, fontWeight: '700' },
-  scroll:           { padding: Spacing.four, gap: Spacing.two, paddingBottom: 40 },
+  scroll:           { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 24 },
   label:            { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
   input:            { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
   textarea:         { minHeight: 80, textAlignVertical: 'top' },

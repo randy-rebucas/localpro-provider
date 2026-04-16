@@ -113,7 +113,7 @@ export default function SettingsScreen() {
   const theme  = useTheme();
   const router = useRouter();
   const qc     = useQueryClient();
-  const { user, clearUser, setUser } = useAuthStore();
+  const { user, clearUser } = useAuthStore();
 
   /* ── User / profile data (for avatar) ─────────────────────── */
   const { data: me } = useQuery({

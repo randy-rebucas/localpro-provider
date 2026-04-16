@@ -16,7 +16,7 @@ import { type Job } from '@/api/jobs';
 import { AppHeader } from '@/components/app-header';
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 interface SearchResult { type: 'job' | 'user' | 'provider'; [key: string]: any }
@@ -32,11 +32,12 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
 
   const trimmed = query.trim();
-  const { data: results, isLoading } = useQuery({
+  const { data: results, isLoading, isError, refetch } = useQuery({
     queryKey: ['search', trimmed],
     queryFn:  () => searchJobs(trimmed),
     staleTime: 1000 * 60,
     enabled: trimmed.length >= 2,
+    retry: 1,
   });
 
   const filtered: Job[] = results ?? [];
@@ -77,6 +78,18 @@ export default function SearchScreen() {
         <View style={styles.skeletons}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
         </View>
+      ) : isError ? (
+        <View style={styles.empty}>
+          <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Search failed</Text>
+          <Text style={[styles.emptyHint, { color: theme.textSecondary }]}>
+            Couldn't reach the server. Check your connection and try again.
+          </Text>
+          <Pressable onPress={() => refetch()} style={styles.retryRow}>
+            <Icon name="refresh-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.retryText, { color: Primary[500] }]}>Retry</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -107,7 +120,7 @@ export default function SearchScreen() {
                   {item.title}
                 </Text>
                 <Text style={[styles.cardBudget, { color: Primary[500] }]}>
-                  ₱{item.budget.toLocaleString()}
+                  ₱{(item.budget ?? 0).toLocaleString()}
                 </Text>
               </View>
               <Text style={[styles.cardCat, { color: theme.textSecondary }]}>{item.category}</Text>
@@ -115,7 +128,7 @@ export default function SearchScreen() {
                 <View style={styles.metaItem}>
                   <Icon name="location-outline" size={13} color={theme.textSecondary} />
                   <Text style={[styles.metaText, { color: theme.textSecondary }]} numberOfLines={1}>
-                    {item.location}
+                    {typeof item.location === 'string' ? item.location : (item.location as any)?.city ?? '—'}
                   </Text>
                 </View>
                 {item.isPriority && (
@@ -138,7 +151,9 @@ const styles = StyleSheet.create({
   searchBar:     { flexDirection: 'row', alignItems: 'center', marginHorizontal: Spacing.four, marginVertical: Spacing.two, borderRadius: 12, paddingHorizontal: 14, gap: Spacing.two },
   searchInput:   { flex: 1, fontSize: 15, paddingVertical: 12 },
   skeletons:     { padding: Spacing.four, gap: Spacing.three },
-  list:          { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
+  list:          { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 16 },
+  retryRow:      { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  retryText:     { fontSize: 14, fontWeight: '600' },
   resultCount:   { fontSize: 13, marginBottom: Spacing.two },
   card:          { borderRadius: 14, padding: Spacing.three, gap: Spacing.one },
   cardTop:       { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },

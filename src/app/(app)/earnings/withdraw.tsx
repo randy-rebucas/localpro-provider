@@ -5,6 +5,7 @@ import { Icon } from '@/components/icon';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
 import { getWallet, requestWithdrawal } from '@/api/earnings';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const schema = z.object({
@@ -51,7 +52,18 @@ export default function WithdrawScreen() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wallet'] });
-      router.back();
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['transactions-all'] });
+      Alert.alert('Success', 'Withdrawal request submitted!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    },
+    onError: (err: any) => {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        'Failed to submit withdrawal request. Please try again.';
+      Alert.alert('Error', msg);
     },
   });
 
@@ -157,14 +169,6 @@ export default function WithdrawScreen() {
             )}
           />
 
-          {mutation.isError && (
-            <Text style={styles.submitError}>Failed to submit withdrawal request. Please try again.</Text>
-          )}
-
-          {mutation.isSuccess && (
-            <Text style={styles.submitSuccess}>Withdrawal request submitted successfully!</Text>
-          )}
-
           <Pressable
             style={[styles.btn, { backgroundColor: Primary[500] }, mutation.isPending && styles.btnDisabled]}
             onPress={handleSubmit((v) => mutation.mutate(v))}
@@ -193,7 +197,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 15, fontWeight: '600' },
   noticeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
   navTitle: { fontSize: 16, fontWeight: '700' },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
   balanceCard: { borderRadius: 20, padding: Spacing.four, gap: Spacing.one },
   balanceLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
   balanceAmount: { color: '#fff', fontSize: 32, fontWeight: '800' },
@@ -202,8 +206,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600' },
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2, fontSize: 15 },
   error: { color: Status.error, fontSize: 12 },
-  submitError: { color: Status.error, fontSize: 13, textAlign: 'center' },
-  submitSuccess: { color: Status.success, fontSize: 13, textAlign: 'center' },
   btn: { borderRadius: 14, paddingVertical: Spacing.three, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: Spacing.two },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   btnDisabled: { opacity: 0.6 },

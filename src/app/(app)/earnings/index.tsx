@@ -21,19 +21,35 @@ export default function EarningsScreen() {
   const theme = useTheme();
   const router = useRouter();
 
-  const { data: wallet, isLoading: walletLoading, refetch, isRefetching } = useQuery({
+  const {
+    data: wallet,
+    isLoading: walletLoading,
+    isError: walletError,
+    refetch: refetchWallet,
+    isRefetching,
+  } = useQuery({
     queryKey: ['wallet'],
     queryFn:  getWallet,
     staleTime: 1000 * 60,
   });
 
-  const { data: rawTxns, isLoading: txLoading } = useQuery({
+  const {
+    data: rawTxns,
+    isLoading: txLoading,
+    isError: txError,
+    refetch: refetchTxns,
+  } = useQuery({
     queryKey: ['transactions', { limit: 5 }],
     queryFn: () => getTransactions({ limit: 5 }),
+    staleTime: 1000 * 60,
   });
 
   const txns = Array.isArray(rawTxns) ? rawTxns : [];
   const isLoading = walletLoading || txLoading;
+
+  async function handleRefresh() {
+    await Promise.all([refetchWallet(), refetchTxns()]);
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -41,13 +57,15 @@ export default function EarningsScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={Primary[500]} />}
       >
         {/* Balance card */}
-        <View style={[styles.balanceCard, { backgroundColor: Primary[500] }]}>
+        <View style={[styles.balanceCard, { backgroundColor: walletError ? '#ef4444' : Primary[500] }]}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
-          {isLoading ? (
+          {walletLoading ? (
             <View style={[styles.balanceSkeleton, { backgroundColor: Primary[400] }]} />
+          ) : walletError ? (
+            <Text style={styles.balanceAmount}>—</Text>
           ) : (
             <Text style={styles.balanceAmount}>₱{(wallet?.balance ?? 0).toLocaleString()}</Text>
           )}
@@ -110,6 +128,8 @@ export default function EarningsScreen() {
 
         {txLoading ? (
           [0, 1, 2].map((i) => <CardSkeleton key={i} />)
+        ) : txError ? (
+          <Text style={[styles.emptyTx, { color: '#ef4444' }]}>Couldn't load transactions. Pull down to retry.</Text>
         ) : txns.length === 0 ? (
           <Text style={[styles.emptyTx, { color: theme.textSecondary }]}>No transactions yet.</Text>
         ) : (

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getTransactions } from '@/api/earnings';
 import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const TX_ICONS: Record<string, IconName> = {
@@ -20,9 +20,10 @@ export default function TransactionsScreen() {
   const theme = useTheme();
   const router = useRouter();
 
-  const { data: rawTxns, isLoading, refetch, isRefetching } = useQuery({
+  const { data: rawTxns, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['transactions-all'],
     queryFn: () => getTransactions({ limit: 100 }),
+    staleTime: 1000 * 60,
   });
 
   const txns = Array.isArray(rawTxns) ? rawTxns : [];
@@ -41,6 +42,15 @@ export default function TransactionsScreen() {
       {isLoading ? (
         <View style={styles.skeletons}>
           {[0, 1, 2, 3, 4].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : isError ? (
+        <View style={styles.empty}>
+          <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load transactions</Text>
+          <Pressable onPress={() => refetch()} style={styles.retryRow}>
+            <Icon name="refresh-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.retryText, { color: Primary[500] }]}>Retry</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
@@ -86,12 +96,14 @@ const styles = StyleSheet.create({
   back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
   skeletons: { padding: Spacing.four, gap: Spacing.two },
-  list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
+  list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 16 },
   row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   rowMeta: { flex: 1, gap: 2 },
   desc: { fontSize: 14, fontWeight: '500' },
   date: { fontSize: 12 },
   amount: { fontSize: 15, fontWeight: '700' },
-  empty: { alignItems: 'center', paddingTop: 80, gap: Spacing.two },
+  empty:     { alignItems: 'center', paddingTop: 80, gap: Spacing.two },
   emptyTitle: { fontSize: 18, fontWeight: '700' },
+  retryRow:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  retryText: { fontSize: 14, fontWeight: '600' },
 });

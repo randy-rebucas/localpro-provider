@@ -12,11 +12,16 @@ interface RawMessage {
   _id?: string;
   id?: string;
   threadId?: string;
-  senderId: string;
-  body: string;
+  // REST responses use senderId (string); SSE events may use sender (populated object or string)
+  senderId?: string | { _id?: string; id?: string };
+  sender?: string | { _id?: string; id?: string };
+  body?: string;
+  content?: string;  // some backends use content instead of body
+  text?: string;
   attachmentUrl?: string | null;
   isRead?: boolean;
-  createdAt: string;
+  createdAt?: string;
+  timestamp?: string | number;  // SSE events sometimes carry a Unix timestamp
 }
 
 export interface Thread {
@@ -54,15 +59,32 @@ function normaliseThread(raw: RawThread): Thread {
   };
 }
 
+function extractId(field: string | { _id?: string; id?: string } | undefined): string {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  return field._id ?? field.id ?? '';
+}
+
+function extractTimestamp(raw: RawMessage): string {
+  if (raw.createdAt) return raw.createdAt;
+  if (raw.timestamp) {
+    const ts = Number(raw.timestamp);
+    // Unix seconds (< 1e11) vs milliseconds
+    return new Date(ts < 1e11 ? ts * 1000 : ts).toISOString();
+  }
+  return new Date().toISOString();
+}
+
 export function normaliseMessage(raw: RawMessage, threadId: string): Message {
   return {
     id: raw._id ?? raw.id ?? String(Math.random()),
     threadId: raw.threadId ?? threadId,
-    senderId: raw.senderId ?? '',
-    body: raw.body ?? '',
+    // Handles both plain-string IDs and populated user objects
+    senderId: extractId(raw.senderId) || extractId(raw.sender),
+    body: raw.body ?? raw.content ?? raw.text ?? '',
     attachmentUrl: raw.attachmentUrl ?? null,
     isRead: raw.isRead ?? false,
-    createdAt: raw.createdAt ?? '',
+    createdAt: extractTimestamp(raw),
   };
 }
 
@@ -73,9 +95,9 @@ export async function getThreads(): Promise<Thread[]> {
 }
 
 export async function getMessages(threadId: string): Promise<Message[]> {
-  const { data } = await api.get<RawMessage[]>(`/api/messages/${threadId}`);
-  const arr = Array.isArray(data) ? data : [];
-  return arr.map((m) => normaliseMessage(m, threadId));
+  const { data } = await api.get<RawMessage[] | { messages: RawMessage[] }>(`/api/messages/${threadId}`);
+  const arr = Array.isArray(data) ? data : ((data as any)?.messages ?? []);
+  return arr.map((m: RawMessage) => normaliseMessage(m, threadId));
 }
 
 export async function sendMessage(threadId: string, body: string): Promise<Message> {

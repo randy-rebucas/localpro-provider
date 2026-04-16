@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { uploadCompletionPhoto } from '@/api/jobs';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function UploadCompletionScreen() {
@@ -42,7 +42,11 @@ export default function UploadCompletionScreen() {
   });
 
   async function pickPhoto() {
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Photo library access is required to select a photo.');
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.85,
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
   header:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:       { width: 32, alignItems: 'flex-start' },
   headerTitle:   { flex: 1, fontSize: 17, fontWeight: '700' },
-  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
   notice:        { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start' },
   noticeText:    { flex: 1, fontSize: 13, lineHeight: 18 },
   preview:       { width: '100%', height: 280, borderRadius: 16 },

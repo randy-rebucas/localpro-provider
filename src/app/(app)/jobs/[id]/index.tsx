@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +14,7 @@ import { getJob } from '@/api/jobs';
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { StatusChip } from '@/components/status-chip';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -29,12 +30,14 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default function JobDetailScreen() {
   const theme  = useTheme();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const { data: job, isLoading, isError } = useQuery({
+  const { data: job, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['job', id],
-    queryFn:  () => getJob(id),
+    queryFn:  () => getJob(id!),
     enabled:  !!id,
+    staleTime: 1000 * 60,
   });
 
   if (isLoading) {
@@ -80,7 +83,11 @@ export default function JobDetailScreen() {
         <StatusChip status={job.status} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
+      >
         {/* Title & budget */}
         <Text style={[styles.title, { color: theme.text }]}>{job.title}</Text>
         <View style={styles.metaRow}>
@@ -174,7 +181,7 @@ const styles = StyleSheet.create({
   headerBar:      { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:        { width: 32, alignItems: 'flex-start' },
   headerTitle:    { flex: 1, fontSize: 16, fontWeight: '700' },
-  scroll:         { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll:         { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
   title:          { fontSize: 22, fontWeight: '800', lineHeight: 28 },
   metaRow:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   budget:         { fontSize: 22, fontWeight: '800' },

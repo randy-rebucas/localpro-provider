@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   getConsultation,
@@ -24,7 +24,7 @@ import {
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { StatusChip } from '@/components/status-chip';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -32,16 +32,19 @@ export default function ConsultationDetailScreen() {
   const theme   = useTheme();
   const router  = useRouter();
   const qc      = useQueryClient();
-  const { id }  = useLocalSearchParams<{ id: string }>();
+  const insets  = useSafeAreaInsets();
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id      = Array.isArray(rawId) ? rawId[0] : rawId;
   const userId  = useAuthStore((s) => s.user?._id);
   const [body,  setBody]  = useState('');
   const [estAmt, setEstAmt] = useState('');
   const [estNote, setEstNote] = useState('');
 
-  const { data: consultation, isLoading } = useQuery({
+  const { data: consultation, isLoading, isError: consultationError } = useQuery({
     queryKey: ['consultation', id],
-    queryFn:  () => getConsultation(id),
+    queryFn:  () => getConsultation(id!),
     enabled:  !!id,
+    staleTime: 1000 * 60,
   });
 
   const { data: messages = [], refetch: refetchMsgs } = useQuery({
@@ -87,7 +90,27 @@ export default function ConsultationDetailScreen() {
     );
   }
 
-  const isPending = consultation?.status === 'pending';
+  if (consultationError || !consultation) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+        <View style={[styles.header, { borderBottomColor: theme.backgroundElement }]}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}><Icon name="chevron-back" size={22} color={theme.text} /></Pressable>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Consultation</Text>
+          <View style={{ width: 32 }} />
+        </View>
+        <View style={styles.errorWrap}>
+          <Icon name="alert-circle-outline" size={52} color="#ef4444" />
+          <Text style={[styles.errorTitle, { color: theme.text }]}>Couldn't load consultation</Text>
+          <Pressable onPress={() => router.back()} style={styles.retryRow}>
+            <Icon name="arrow-back-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.retryText, { color: Primary[500] }]}>Go back</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const isPending = consultation.status === 'pending';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -189,7 +212,7 @@ export default function ConsultationDetailScreen() {
                     <Text style={[styles.bubbleText, { color: isMine ? '#fff' : theme.text }]}>{msg.body}</Text>
                   </View>
                   <Text style={[styles.bubbleTime, { color: theme.textSecondary }]}>
-                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {(() => { const d = new Date(msg.createdAt); return isNaN(d.getTime()) ? '—' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); })()}
                   </Text>
                 </View>
               );
@@ -198,7 +221,7 @@ export default function ConsultationDetailScreen() {
         </ScrollView>
 
         {/* Message input */}
-        <View style={[styles.inputBar, { backgroundColor: theme.background, borderTopColor: theme.backgroundElement }]}>
+        <View style={[styles.inputBar, { backgroundColor: theme.background, borderTopColor: theme.backgroundElement, paddingBottom: insets.bottom || Spacing.two }]}>
           <TextInput
             style={[styles.msgInput, { backgroundColor: theme.backgroundElement, color: theme.text }]}
             value={body}
@@ -226,7 +249,11 @@ const styles = StyleSheet.create({
   backBtn:       { width: 32, alignItems: 'flex-start' },
   headerTitle:   { fontSize: 16, fontWeight: '700' },
   headerSub:     { fontSize: 12 },
-  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: 16 },
+  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
+  errorWrap:     { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five },
+  errorTitle:    { fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  retryRow:      { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  retryText:     { fontSize: 14, fontWeight: '600' },
   card:          { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
   cardTitle:     { fontSize: 15, fontWeight: '700' },
   cardDesc:      { fontSize: 14, lineHeight: 21 },

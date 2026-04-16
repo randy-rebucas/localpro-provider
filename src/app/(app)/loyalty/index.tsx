@@ -39,15 +39,31 @@ export default function LoyaltyScreen() {
   const theme  = useTheme();
   const router = useRouter();
 
-  const { data: loyalty, isLoading: loyaltyLoading, refetch, isRefetching } = useQuery({
+  const {
+    data: loyalty,
+    isLoading: loyaltyLoading,
+    isError: loyaltyError,
+    refetch: refetchLoyalty,
+    isRefetching,
+  } = useQuery({
     queryKey: ['loyalty'],
     queryFn:  getLoyalty,
+    staleTime: 1000 * 60 * 2,
   });
 
-  const { data: referral, isLoading: referralLoading } = useQuery({
+  const {
+    data: referral,
+    isLoading: referralLoading,
+    refetch: refetchReferral,
+  } = useQuery({
     queryKey: ['referral'],
     queryFn:  getReferral,
+    staleTime: 1000 * 60 * 5,
   });
+
+  async function handleRefresh() {
+    await Promise.all([refetchLoyalty(), refetchReferral()]);
+  }
 
   const isLoading   = loyaltyLoading || referralLoading;
   const tier        = normalizeTier(loyalty?.account?.tier ?? 'bronze');
@@ -79,13 +95,22 @@ export default function LoyaltyScreen() {
         <View style={styles.skeletons}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
         </View>
+      ) : loyaltyError ? (
+        <View style={styles.errorWrap}>
+          <Icon name="alert-circle-outline" size={52} color="#ef4444" />
+          <Text style={[styles.errorTitle, { color: theme.text }]}>Couldn't load loyalty data</Text>
+          <Pressable onPress={() => refetchLoyalty()} style={[styles.retryBtn, { backgroundColor: Primary[500] }]}>
+            <Icon name="refresh-outline" size={15} color="#fff" />
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </Pressable>
+        </View>
       ) : (
         <FlatList
           data={loyalty?.ledger ?? []}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Primary[500]} />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={Primary[500]} />}
           ListHeaderComponent={
             <>
               {/* ── Hero points card ─────────────────────────── */}
@@ -227,7 +252,7 @@ export default function LoyaltyScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.ledgerReason, { color: theme.text }]}>{item.reason}</Text>
                   <Text style={[styles.ledgerDate, { color: theme.textSecondary }]}>
-                    {new Date(item.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {(() => { const d = new Date(item.createdAt); return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }); })()}
                   </Text>
                 </View>
                 <View style={[styles.ledgerPtsBadge, { backgroundColor: isPositive ? Status.successBg : Status.errorBg }]}>
@@ -251,7 +276,11 @@ const styles = StyleSheet.create({
   backBtn:         { width: 32, alignItems: 'flex-start' },
   headerTitle:     { fontSize: 17, fontWeight: '700' },
   skeletons:       { padding: Spacing.four, gap: Spacing.three },
-  list:            { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset },
+  list:            { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
+  errorWrap:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five },
+  errorTitle:      { fontSize: 16, fontWeight: '600', textAlign: 'center' },
+  retryBtn:        { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: Spacing.four, paddingVertical: Spacing.two + 2, marginTop: 4 },
+  retryBtnText:    { color: '#fff', fontSize: 14, fontWeight: '700' },
 
   /* Hero card */
   heroCard:        { borderRadius: 24, padding: Spacing.four, paddingVertical: Spacing.five, overflow: 'hidden', minHeight: 200 },

@@ -42,7 +42,7 @@ import {
   type Lesson,
 } from '@/api/provider-profile';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { CATEGORY_META } from './index';
 
@@ -165,7 +165,7 @@ export default function CourseDetailScreen() {
   const [certData, setCertData]               = useState<Certificate | null>(null);
   const [activating, setActivating]           = useState(false);
 
-  const { data: course, isLoading, refetch } = useQuery({
+  const { data: course, isLoading } = useQuery({
     queryKey: ['course', id],
     queryFn:  () => getCourseDetail(id),
     enabled:  !!id,
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   header:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:            { width: 32, alignItems: 'flex-start' },
   headerTitle:        { flex: 1, fontSize: 16, fontWeight: '700', textAlign: 'center' },
-  scroll:             { padding: Spacing.four, gap: Spacing.three, paddingBottom: 48 },
+  scroll:             { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
 
   activatingBanner:   { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, padding: Spacing.two, paddingHorizontal: Spacing.three },
   activatingText:     { fontSize: 13, fontWeight: '600' },

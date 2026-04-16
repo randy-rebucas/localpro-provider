@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:        { width: 32, alignItems: 'flex-start' },
   headerTitle:    { fontSize: 17, fontWeight: '700' },
-  list:           { padding: Spacing.four, gap: Spacing.four, paddingBottom: BottomTabInset },
+  list:           { padding: Spacing.four, gap: Spacing.four, paddingBottom: BottomTabInset + 24 },
 
   /* Summary */
   summaryRow:     { flexDirection: 'row', gap: Spacing.two, flexWrap: 'wrap' },

@@ -15,13 +15,17 @@ export type CreateTemplatePayload = Omit<QuoteTemplate, '_id' | 'createdAt'>;
 export type UpdateTemplatePayload = Partial<CreateTemplatePayload>;
 
 export async function getQuoteTemplates(): Promise<QuoteTemplate[]> {
-  const { data } = await api.get<QuoteTemplate[]>('/api/quote-templates');
-  return Array.isArray(data) ? data : [];
+  const { data } = await api.get<any>('/api/quote-templates');
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.templates)) return data.templates;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
 }
 
 export async function getQuoteTemplate(id: string): Promise<QuoteTemplate> {
-  const { data } = await api.get<QuoteTemplate>(`/api/quote-templates/${id}`);
-  return data;
+  const { data } = await api.get<any>(`/api/quote-templates/${id}`);
+  // Handle both flat object and wrapped { template: {} }
+  return data?.template ?? data;
 }
 
 export async function createQuoteTemplate(payload: CreateTemplatePayload): Promise<QuoteTemplate> {

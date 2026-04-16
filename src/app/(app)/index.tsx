@@ -3,7 +3,9 @@ import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getAnnouncements, type Announcement } from '@/api/announcements';
 import { getProviderProfile } from '@/api/auth';
+import { getConsultations, type Consultation } from '@/api/consultations';
 import { getWallet } from '@/api/earnings';
 import { getMyJobs, getMyJobsCount, type Job } from '@/api/jobs';
 import { getQuotedJobIds } from '@/api/quotes';
@@ -79,6 +81,42 @@ function RecentJobRow({ job, onPress }: { job: Job; onPress: () => void }) {
   );
 }
 
+/* ── Consultation row ─────────────────────────────────────────── */
+const CONSULT_TYPE_LABEL: Record<string, string> = {
+  site_inspection: 'Site Inspection',
+  chat:            'Chat Consultation',
+};
+
+function ConsultationRow({ item, onPress }: { item: Consultation; onPress: () => void }) {
+  const theme = useTheme();
+  const d = new Date(item.createdAt);
+  const dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.jobRow,
+        { backgroundColor: theme.backgroundElement, opacity: pressed ? 0.75 : 1 },
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.consultIcon, { backgroundColor: Primary[50] }]}>
+        <Icon
+          name={item.type === 'site_inspection' ? 'location-outline' : 'chatbubble-outline'}
+          size={18}
+          color={Primary[500]}
+        />
+      </View>
+      <View style={styles.jobRowMain}>
+        <Text style={[styles.jobRowTitle, { color: theme.text }]} numberOfLines={1}>{item.title}</Text>
+        <Text style={[styles.jobRowSub, { color: theme.textSecondary }]}>
+          {CONSULT_TYPE_LABEL[item.type] ?? item.type}{dateStr ? ` · ${dateStr}` : ''}
+        </Text>
+      </View>
+      <StatusChip status={item.status} />
+    </Pressable>
+  );
+}
+
 /* ── Quick action card ────────────────────────────────────────── */
 interface QuickAction {
   label: string;
@@ -93,6 +131,30 @@ const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Earnings',    icon: 'wallet-outline',        route: '/(app)/earnings',    color: Status.success },
   { label: 'Messages',    icon: 'chatbubble-outline',    route: '/(app)/messages',    color: '#f59e0b'      },
 ];
+
+/* ── Announcement type config ─────────────────────────────────── */
+const TYPE_CONFIG: Record<string, { icon: IconName; color: string; bg: string }> = {
+  info:    { icon: 'information-circle-outline', color: Status.info,    bg: Status.infoBg },
+  warning: { icon: 'warning-outline',            color: Status.warning, bg: Status.warningBg },
+  success: { icon: 'checkmark-circle-outline',   color: Status.success, bg: Status.successBg },
+  danger:  { icon: 'alert-circle-outline',       color: Status.error,   bg: Status.errorBg },
+};
+
+function AnnouncementBanner({ item }: { item: Announcement }) {
+  const theme = useTheme();
+  const cfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.info;
+  return (
+    <View style={[styles.announcementCard, { backgroundColor: theme.backgroundElement, borderLeftColor: cfg.color }]}>
+      <View style={[styles.announcementIcon, { backgroundColor: cfg.bg }]}>
+        <Icon name={cfg.icon} size={18} color={cfg.color} />
+      </View>
+      <View style={styles.announcementBody}>
+        <Text style={[styles.announcementTitle, { color: theme.text }]} numberOfLines={1}>{item.title}</Text>
+        <Text style={[styles.announcementMsg, { color: theme.textSecondary }]} numberOfLines={2}>{item.message}</Text>
+      </View>
+    </View>
+  );
+}
 
 /* ── Screen ───────────────────────────────────────────────────── */
 export default function DashboardScreen() {
@@ -135,6 +197,21 @@ export default function DashboardScreen() {
     staleTime: 1000 * 60,
   });
 
+  const { data: announcements = [] } = useQuery({
+    queryKey:  ['announcements'],
+    queryFn:   getAnnouncements,
+    staleTime: 1000 * 60 * 5,
+  });
+  const latestAnnouncements = announcements.slice(0, 3);
+
+  const { data: consultations = [], isLoading: consultLoading } = useQuery({
+    queryKey:  ['consultations', 'all'],
+    queryFn:   () => getConsultations(),
+    staleTime: 1000 * 60,
+  });
+  const pendingConsultations = consultations.filter((c) => c.status === 'pending');
+  const recentConsultations  = consultations.slice(0, 3);
+
   const avgRating = profile?.avgRating ?? 0;
 
   /* Greeting block rendered inside AppHeader's left slot */
@@ -162,6 +239,23 @@ export default function DashboardScreen() {
           />
         }
       >
+
+        {/* ── Announcements ────────────────────────────────── */}
+        {latestAnnouncements.length > 0 && (
+          <View>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Announcements</Text>
+              <Pressable onPress={() => router.push('/(app)/announcements')}>
+                <Text style={[styles.sectionLink, { color: Primary[500] }]}>See all</Text>
+              </Pressable>
+            </View>
+            <View style={styles.announcementList}>
+              {latestAnnouncements.map((a) => (
+                <AnnouncementBanner key={a._id} item={a} />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* ── Stats grid ──────────────────────────────────── */}
         <View style={styles.statsGrid}>
@@ -195,6 +289,14 @@ export default function DashboardScreen() {
             icon="star-outline"
             color="#f59e0b"
           />
+          <StatCard
+            label="Consultations"
+            value={consultLoading ? '…' : String(pendingConsultations.length)}
+            icon="calendar-outline"
+            color="#0ea5e9"
+            loading={consultLoading}
+            onPress={() => router.push('/(app)/consultations' as any)}
+          />
         </View>
 
         {/* ── Quick actions ────────────────────────────────── */}
@@ -218,6 +320,33 @@ export default function DashboardScreen() {
             ))}
           </View>
         </View>
+
+        {/* ── Consultations ────────────────────────────────── */}
+        {(consultLoading || recentConsultations.length > 0) && (
+          <View>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Consultations</Text>
+              <Pressable onPress={() => router.push('/(app)/consultations' as any)}>
+                <Text style={[styles.sectionLink, { color: Primary[500] }]}>See all</Text>
+              </Pressable>
+            </View>
+            {consultLoading ? (
+              <View style={[styles.emptyCard, { backgroundColor: theme.backgroundElement }]}>
+                <Text style={[styles.emptyHint, { color: theme.textSecondary }]}>Loading…</Text>
+              </View>
+            ) : (
+              <View style={styles.jobList}>
+                {recentConsultations.map((c) => (
+                  <ConsultationRow
+                    key={c._id}
+                    item={c}
+                    onPress={() => router.push(`/(app)/consultations/${c._id}` as any)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* ── Recent activity ──────────────────────────────── */}
         <View>
@@ -292,6 +421,17 @@ const styles = StyleSheet.create({
   quickCard:        { flex: 1, minWidth: '44%', borderRadius: 16, padding: Spacing.three, alignItems: 'center', gap: 10 },
   quickIconWrap:    { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   quickLabel:       { fontSize: 13, fontWeight: '600', textAlign: 'center' },
+
+  /* Announcements */
+  announcementList:  { gap: Spacing.two },
+  announcementCard:  { borderRadius: 12, padding: Spacing.three, flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two, borderLeftWidth: 3 },
+  announcementIcon:  { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  announcementBody:  { flex: 1, gap: 3 },
+  announcementTitle: { fontSize: 13, fontWeight: '700' },
+  announcementMsg:   { fontSize: 12, lineHeight: 17 },
+
+  /* Consultation icon */
+  consultIcon:      { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
 
   /* Recent job rows */
   jobList:          { gap: Spacing.two },

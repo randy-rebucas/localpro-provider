@@ -146,7 +146,7 @@ export default function ChatScreen() {
   }, []);
 
   /* Messages query */
-  const { data: messages = [], isFetching } = useQuery({
+  const { data: messages = [], isFetching, isError, refetch: refetchMessages } = useQuery({
     queryKey: ['messages', threadId],
     queryFn: () => getMessages(threadId!),
     enabled: !!threadId,
@@ -177,7 +177,9 @@ export default function ChatScreen() {
           return [...prev, msg];
         });
         qc.invalidateQueries({ queryKey: ['threads'] });
-      } catch {}
+      } catch (err) {
+        if (__DEV__) console.warn('[SSE] Failed to process message event', err);
+      }
     });
     return () => es.close();
   }, [threadId, qc]);
@@ -198,9 +200,11 @@ export default function ChatScreen() {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     } catch {
       setInput(text);
-    } finally {
-      setSending(false);
+      // Brief delay so the restored text doesn't feel jarring
+      setTimeout(() => setSending(false), 300);
+      return;
     }
+    setSending(false);
   }
 
   /* ── Render ── */
@@ -276,6 +280,17 @@ export default function ChatScreen() {
             isFetching ? (
               <View style={styles.loadingCenter}>
                 <ActivityIndicator color={Primary[500]} />
+              </View>
+            ) : isError ? (
+              <View style={styles.empty}>
+                <View style={[styles.emptyIconWrap, { backgroundColor: '#fee2e2' }]}>
+                  <Icon name="alert-circle-outline" size={36} color="#ef4444" />
+                </View>
+                <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load messages</Text>
+                <Pressable onPress={() => refetchMessages()} style={[styles.retryBtn, { backgroundColor: Primary[500] }]}>
+                  <Icon name="refresh-outline" size={15} color="#fff" />
+                  <Text style={styles.retryText}>Retry</Text>
+                </Pressable>
               </View>
             ) : (
               <View style={styles.empty}>
@@ -374,11 +389,13 @@ const styles = StyleSheet.create({
   bubbleText:    { fontSize: 15, lineHeight: 22 },
   bubbleTime:    { fontSize: 11, paddingHorizontal: 4, opacity: 0.6 },
 
-  /* Empty */
+  /* Empty / error */
   empty:         { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five },
   emptyIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.one },
   emptyTitle:    { fontSize: 17, fontWeight: '700' },
   emptyHint:     { fontSize: 14, textAlign: 'center', lineHeight: 20, opacity: 0.7 },
+  retryBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, marginTop: 4 },
+  retryText:     { color: '#fff', fontSize: 14, fontWeight: '700' },
 
   /* Input bar */
   inputBar:  { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: Spacing.three, paddingTop: Spacing.two, gap: Spacing.two, borderTopWidth: StyleSheet.hairlineWidth },

@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getQuote, retractQuote } from '@/api/quotes';
 import { Icon } from '@/components/icon';
 import { StatusChip } from '@/components/status-chip';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -25,16 +25,18 @@ export default function QuoteDetailScreen() {
   const qc = useQueryClient();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: quote, isLoading } = useQuery({
+  const { data: quote, isLoading, isError, refetch } = useQuery({
     queryKey: ['quote', id],
     queryFn: () => getQuote(id!),
     enabled: !!id,
+    staleTime: 1000 * 60,
   });
 
   const retract = useMutation({
     mutationFn: () => retractQuote(id!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['quoted-job-ids'] });
+      qc.invalidateQueries({ queryKey: ['my-quotes'] });
       router.back();
     },
   });
@@ -53,12 +55,47 @@ export default function QuoteDetailScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+        <View style={styles.nav}>
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Icon name="chevron-back" size={20} color={Primary[500]} />
+            <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
+          </Pressable>
+          <Text style={[styles.navTitle, { color: theme.text }]}>Quote Detail</Text>
+          <View style={{ width: 60 }} />
+        </View>
         <ActivityIndicator style={{ flex: 1 }} color={Primary[500]} />
       </SafeAreaView>
     );
   }
 
-  if (!quote) return null;
+  if (isError || !quote) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+        <View style={styles.nav}>
+          <Pressable style={styles.backBtn} onPress={() => router.back()}>
+            <Icon name="chevron-back" size={20} color={Primary[500]} />
+            <Text style={[styles.back, { color: Primary[500] }]}>Back</Text>
+          </Pressable>
+          <Text style={[styles.navTitle, { color: theme.text }]}>Quote Detail</Text>
+          <View style={{ width: 60 }} />
+        </View>
+        <View style={styles.errorState}>
+          <View style={[styles.errorIconWrap, { backgroundColor: '#fee2e2' }]}>
+            <Icon name="alert-circle-outline" size={36} color="#ef4444" />
+          </View>
+          <Text style={[styles.errorTitle, { color: theme.text }]}>
+            {isError ? "Couldn't load quote" : 'Quote not found'}
+          </Text>
+          {isError && (
+            <Pressable style={[styles.retryBtn, { backgroundColor: Primary[500] }]} onPress={() => refetch()}>
+              <Icon name="refresh-outline" size={15} color="#fff" />
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const canRetract = ['pending', 'submitted'].includes(quote.status);
 
@@ -140,7 +177,12 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, width: 60 },
   back: { fontSize: 15, fontWeight: '600' },
   navTitle: { fontSize: 16, fontWeight: '700' },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
+  errorState:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five },
+  errorIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
+  errorTitle:    { fontSize: 17, fontWeight: '700' },
+  retryBtn:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, marginTop: 4 },
+  retryText:     { color: '#fff', fontSize: 14, fontWeight: '700' },
   jobTitle: { fontSize: 20, fontWeight: '700', lineHeight: 28 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   date: { fontSize: 13 },

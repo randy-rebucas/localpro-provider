@@ -20,7 +20,7 @@ import { z } from 'zod';
 
 import { getJob } from '@/api/jobs';
 import { submitQuote } from '@/api/quotes';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const schema = z.object({
@@ -86,7 +86,7 @@ export default function SubmitQuoteScreen() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['quoted-job-ids'] });
-      qc.invalidateQueries({ queryKey: ['quoted-jobs'] });
+      qc.invalidateQueries({ queryKey: ['my-quotes'] });
       router.back();
     },
     onError: (err: any) => {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   jobBanner: { marginHorizontal: Spacing.four, marginBottom: Spacing.two, borderRadius: 12, padding: Spacing.three, gap: 4 },
   jobBannerTitle: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
   jobBannerBudget: { fontSize: 13, fontWeight: '700' },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
   field: { gap: Spacing.one },
   label: { fontSize: 13, fontWeight: '600' },
   input: { borderRadius: 12, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2, fontSize: 15 },

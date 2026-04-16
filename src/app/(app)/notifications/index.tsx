@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getNotifications, markAllRead, markOneRead, type AppNotification } from '@/api/notifications';
 import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useNotificationStore } from '@/stores/notification-store';
 
@@ -43,7 +43,7 @@ function NotifRow({ notif, onPress }: { notif: AppNotification; onPress: () => v
           {notif.message}
         </Text>
         <Text style={[styles.time, { color: theme.textSecondary }]}>
-          {new Date(notif.createdAt).toLocaleString()}
+          {(() => { const d = new Date(notif.createdAt); return isNaN(d.getTime()) ? '—' : d.toLocaleString(); })()}
         </Text>
       </View>
       {!notif.read && <View style={[styles.dot, { backgroundColor: Primary[500] }]} />}
@@ -57,7 +57,7 @@ export default function NotificationsScreen() {
   const storeMarkAllRead = useNotificationStore((s) => s.markAllRead);
   const storeMarkRead    = useNotificationStore((s) => s.markRead);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
     staleTime: 1000 * 30,
@@ -89,8 +89,10 @@ export default function NotificationsScreen() {
           Notifications {unreadCount > 0 && `(${unreadCount})`}
         </Text>
         {unreadCount > 0 && (
-          <Pressable onPress={() => markAll.mutate()}>
-            <Text style={[styles.markAll, { color: Primary[500] }]}>Mark all read</Text>
+          <Pressable onPress={() => { if (!markAll.isPending) markAll.mutate(); }} disabled={markAll.isPending}>
+            <Text style={[styles.markAll, { color: markAll.isPending ? Primary[300] : Primary[500] }]}>
+              {markAll.isPending ? 'Marking…' : 'Mark all read'}
+            </Text>
           </Pressable>
         )}
       </View>
@@ -98,6 +100,15 @@ export default function NotificationsScreen() {
       {isLoading ? (
         <View style={styles.skeletons}>
           {[0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : isError ? (
+        <View style={styles.empty}>
+          <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load notifications</Text>
+          <Pressable onPress={() => refetch()} style={styles.retryRow}>
+            <Icon name="refresh-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.retryText, { color: Primary[500] }]}>Retry</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
@@ -130,7 +141,9 @@ const styles = StyleSheet.create({
   heading: { fontSize: 24, fontWeight: '700' },
   markAll: { fontSize: 14, fontWeight: '600' },
   skeletons: { padding: Spacing.four, gap: Spacing.two },
-  list: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
+  list:      { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 16 },
+  retryRow:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  retryText: { fontSize: 14, fontWeight: '600' },
   row: { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two, overflow: 'hidden' },
   rowContent: { flex: 1, gap: 4 },
   message: { fontSize: 14, lineHeight: 20 },

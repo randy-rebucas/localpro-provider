@@ -8,7 +8,7 @@ import { getConsultations, type Consultation } from '@/api/consultations';
 import { Icon, type IconName } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
 import { StatusChip } from '@/components/status-chip';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const TABS = ['all', 'pending', 'accepted', 'completed'] as const;
@@ -24,9 +24,10 @@ export default function ConsultationsScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>('all');
 
-  const { data = [], isLoading, refetch, isRefetching } = useQuery({
+  const { data = [], isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['consultations', tab],
     queryFn:  () => getConsultations(tab === 'all' ? undefined : { status: tab }),
+    staleTime: 1000 * 60,
   });
 
   return (
@@ -40,23 +41,34 @@ export default function ConsultationsScreen() {
       </View>
 
       {/* Tab strip */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabStrip}>
-        {TABS.map((t) => (
-          <Pressable
-            key={t}
-            style={[styles.tabBtn, t === tab && { borderBottomColor: Primary[500], borderBottomWidth: 2 }]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[styles.tabText, { color: t === tab ? Primary[500] : theme.textSecondary }]}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      <View style={[styles.tabStripWrap, { borderBottomColor: theme.backgroundElement }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabStrip}>
+          {TABS.map((t) => (
+            <Pressable
+              key={t}
+              style={[styles.tabBtn, { borderBottomColor: t === tab ? Primary[500] : 'transparent' }]}
+              onPress={() => setTab(t)}
+            >
+              <Text style={[styles.tabText, { color: t === tab ? Primary[500] : theme.textSecondary }]}>
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
 
       {isLoading ? (
         <View style={styles.skeletons}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : isError ? (
+        <View style={styles.empty}>
+          <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load consultations</Text>
+          <Pressable onPress={() => refetch()} style={styles.retryRow}>
+            <Icon name="refresh-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.retryText, { color: Primary[500] }]}>Retry</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
@@ -98,7 +110,7 @@ export default function ConsultationsScreen() {
               ) : null}
               <View style={styles.cardMeta}>
                 <Text style={[styles.cardDate, { color: theme.textSecondary }]}>
-                  {new Date(item.createdAt).toLocaleDateString()}
+                  {(() => { const d = new Date(item.createdAt); return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(); })()}
                 </Text>
                 {item.estimateAmount != null && (
                   <Text style={[styles.cardEstimate, { color: Primary[500] }]}>
@@ -119,11 +131,14 @@ const styles = StyleSheet.create({
   header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:     { width: 32, alignItems: 'flex-start' },
   headerTitle: { flex: 1, fontSize: 17, fontWeight: '700' },
-  tabStrip:    { paddingHorizontal: Spacing.four, paddingVertical: Spacing.one, gap: Spacing.two },
-  tabBtn:      { paddingHorizontal: Spacing.two, paddingVertical: Spacing.two },
+  tabStripWrap: { borderBottomWidth: StyleSheet.hairlineWidth },
+  tabStrip:    { paddingHorizontal: Spacing.four, gap: Spacing.two },
+  tabBtn:      { paddingHorizontal: Spacing.two, paddingVertical: Spacing.two + 2, borderBottomWidth: 2 },
   tabText:     { fontSize: 14, fontWeight: '600' },
   skeletons:   { padding: Spacing.four, gap: Spacing.three },
-  list:        { padding: Spacing.four, gap: Spacing.two, paddingBottom: 32 },
+  list:        { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 16 },
+  retryRow:    { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  retryText:   { fontSize: 14, fontWeight: '600' },
   card:        { borderRadius: 14, padding: Spacing.three, gap: Spacing.two },
   cardTop:     { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   typeIcon:    { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

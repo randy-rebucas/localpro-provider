@@ -47,7 +47,7 @@ export default function JobsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>('active');
 
-  const { data, isLoading, refetch, isRefetching } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['my-jobs', activeTab],
     queryFn: () => getMyJobs({ status: activeTab }),
     staleTime: 1000 * 30,
@@ -74,6 +74,15 @@ export default function JobsScreen() {
       {isLoading ? (
         <View style={styles.skeletons}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : isError ? (
+        <View style={styles.empty}>
+          <Icon name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load jobs</Text>
+          <Pressable style={styles.emptyLinkRow} onPress={() => refetch()}>
+            <Icon name="refresh-outline" size={14} color={Primary[500]} />
+            <Text style={[styles.emptyLink, { color: Primary[500] }]}>Retry</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList

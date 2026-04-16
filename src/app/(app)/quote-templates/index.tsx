@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { deleteQuoteTemplate, getQuoteTemplates, type QuoteTemplate } from '@/api/quote-templates';
 import { Icon } from '@/components/icon';
 import { CardSkeleton } from '@/components/loading-skeleton';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function QuoteTemplatesScreen() {
@@ -22,9 +22,10 @@ export default function QuoteTemplatesScreen() {
   const router = useRouter();
   const qc     = useQueryClient();
 
-  const { data: templates = [], isLoading, refetch, isRefetching } = useQuery({
+  const { data: templates = [], isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['quote-templates'],
     queryFn:  getQuoteTemplates,
+    staleTime: 1000 * 60 * 5,
   });
 
   const deleteMutation = useMutation({
@@ -46,8 +47,19 @@ export default function QuoteTemplatesScreen() {
       </View>
 
       {isLoading ? (
-        <View style={styles.skeletons}>
+        <View style={[styles.skeletons, { paddingBottom: BottomTabInset + 16 }]}>
           {[0, 1, 2].map((i) => <CardSkeleton key={i} />)}
+        </View>
+      ) : isError ? (
+        <View style={styles.errorState}>
+          <View style={[styles.errorIconWrap, { backgroundColor: '#fee2e2' }]}>
+            <Icon name="alert-circle-outline" size={36} color="#ef4444" />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>Couldn't load templates</Text>
+          <Pressable style={[styles.createBtn, { backgroundColor: Primary[500] }]} onPress={() => refetch()}>
+            <Icon name="refresh-outline" size={18} color="#fff" />
+            <Text style={styles.createBtnText}>Retry</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
@@ -135,7 +147,9 @@ const styles = StyleSheet.create({
   backBtn:       { width: 32, alignItems: 'flex-start' },
   headerTitle:   { flex: 1, fontSize: 17, fontWeight: '700' },
   skeletons:     { padding: Spacing.four, gap: Spacing.three },
-  list:          { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  list:          { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 16 },
+  errorState:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five },
+  errorIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   hint:          { fontSize: 13, lineHeight: 18 },
   card:          { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
   cardTop:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },

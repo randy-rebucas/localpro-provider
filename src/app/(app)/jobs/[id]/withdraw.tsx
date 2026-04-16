@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { withdrawFromJob } from '@/api/jobs';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const REASONS = [
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   header:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:       { width: 32, alignItems: 'flex-start' },
   headerTitle:   { flex: 1, fontSize: 17, fontWeight: '700' },
-  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
+  scroll:        { padding: Spacing.four, gap: Spacing.three, paddingBottom: BottomTabInset + 24 },
   notice:        { borderRadius: 14, padding: Spacing.three, flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start' },
   noticeText:    { flex: 1, fontSize: 13, lineHeight: 18, fontWeight: '500' },
   label:         { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },

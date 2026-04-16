@@ -20,7 +20,7 @@ import * as z from 'zod';
 
 import { getQuoteTemplate, updateQuoteTemplate } from '@/api/quote-templates';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing, Status } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing, Status } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 const schema = z.object({
@@ -38,12 +38,14 @@ export default function EditTemplateScreen() {
   const theme  = useTheme();
   const router = useRouter();
   const qc     = useQueryClient();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  const { data: template, isLoading } = useQuery({
+  const { data: template, isLoading, isError, refetch } = useQuery({
     queryKey: ['quote-template', id],
-    queryFn:  () => getQuoteTemplate(id),
+    queryFn:  () => getQuoteTemplate(id!),
     enabled:  !!id,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
@@ -101,6 +103,22 @@ export default function EditTemplateScreen() {
           <View style={styles.center}>
             <ActivityIndicator size="large" color={Primary[500]} />
           </View>
+        ) : isError ? (
+          <View style={styles.center}>
+            <View style={[styles.errorIconWrap, { backgroundColor: '#fee2e2' }]}>
+              <Icon name="alert-circle-outline" size={36} color="#ef4444" />
+            </View>
+            <Text style={[{ fontSize: 16, fontWeight: '700', marginTop: Spacing.two }, { color: theme.text }]}>
+              Couldn't load template
+            </Text>
+            <Pressable
+              style={[styles.retryBtn, { backgroundColor: Primary[500] }]}
+              onPress={() => refetch()}
+            >
+              <Icon name="refresh-outline" size={15} color="#fff" />
+              <Text style={styles.retryText}>Retry</Text>
+            </Pressable>
+          </View>
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Template Name *</Text>
@@ -121,6 +139,7 @@ export default function EditTemplateScreen() {
                 <Controller control={control} name="materialsCost" render={({ field: { value, onChange, onBlur } }) => (
                   <TextInput style={inputStyle} value={value} onChangeText={onChange} onBlur={onBlur} keyboardType="numeric" placeholder="0" placeholderTextColor={theme.textSecondary} />
                 )} />
+                {errors.materialsCost && <Text style={styles.err}>{errors.materialsCost.message}</Text>}
               </View>
             </View>
 
@@ -180,7 +199,10 @@ const styles = StyleSheet.create({
   header:           { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderBottomWidth: StyleSheet.hairlineWidth },
   backBtn:          { width: 32, alignItems: 'flex-start' },
   headerTitle:      { flex: 1, fontSize: 17, fontWeight: '700' },
-  scroll:           { padding: Spacing.four, gap: Spacing.two, paddingBottom: 40 },
+  scroll:           { padding: Spacing.four, gap: Spacing.two, paddingBottom: BottomTabInset + 24 },
+  errorIconWrap:    { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
+  retryBtn:         { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10, marginTop: Spacing.two },
+  retryText:        { color: '#fff', fontSize: 14, fontWeight: '700' },
   label:            { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
   input:            { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
   textarea:         { minHeight: 80, textAlignVertical: 'top' },

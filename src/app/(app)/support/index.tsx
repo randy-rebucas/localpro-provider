@@ -1,31 +1,39 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getSupportMessages, sendSupportMessage, type SupportMessage } from '@/api/support';
 import { Icon } from '@/components/icon';
-import { Primary, Spacing } from '@/constants/theme';
+import { BottomTabInset, Primary, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function SupportScreen() {
   const theme   = useTheme();
   const router  = useRouter();
+  const insets  = useSafeAreaInsets();
   const qc      = useQueryClient();
   const userId  = useAuthStore((s) => s.user?._id);
-  const [body, setBody] = useState('');
+  const [body, setBody]             = useState('');
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const listRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardOpen(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardOpen(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   const { data: messages = [], isLoading, refetch } = useQuery({
     queryKey: ['support-messages'],
@@ -43,8 +51,8 @@ export default function SupportScreen() {
   });
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={80}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safe, { backgroundColor: theme.background }]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={insets.top + 52}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.backgroundElement }]}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -120,7 +128,7 @@ export default function SupportScreen() {
         )}
 
         {/* Input bar */}
-        <View style={[styles.inputBar, { backgroundColor: theme.background, borderTopColor: theme.backgroundElement }]}>
+        <View style={[styles.inputBar, { backgroundColor: theme.background, borderTopColor: theme.backgroundElement, paddingBottom: keyboardOpen ? Spacing.two : BottomTabInset }]}>
           <TextInput
             style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
             value={body}

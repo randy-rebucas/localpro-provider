@@ -51,18 +51,44 @@ function normaliseQuote(raw: Record<string, any>): Quote {
 }
 
 /**
- * GET /api/quotes → { quotedJobIds: [] }
- * Returns the job IDs this provider has submitted quotes for.
- * There is no "list all my quotes" endpoint; this is the closest equivalent.
+ * GET /api/quotes — handles all backend response shapes:
+ *   • Quote[]
+ *   • { quotes: Quote[] }
+ *   • { quotedJobIds: string[] }  ← backend may return only IDs; we fetch each quote individually
  */
+export async function getMyQuotes(): Promise<Quote[]> {
+  const { data } = await api.get<any>('/api/quotes');
+
+  // Shape 1: plain array of quote objects
+  if (Array.isArray(data)) return data.map(normaliseQuote);
+
+  // Shape 2: { quotes: [...] }
+  if (Array.isArray(data?.quotes)) return data.quotes.map(normaliseQuote);
+
+  // Shape 3: { quotedJobIds: [...] } — fetch each quote by its job/quote ID
+  const ids: string[] = Array.isArray(data?.quotedJobIds) ? data.quotedJobIds : [];
+  if (ids.length === 0) return [];
+
+  const results = await Promise.allSettled(ids.map((id) => getQuote(id)));
+  return results
+    .filter((r): r is PromiseFulfilledResult<Quote> => r.status === 'fulfilled')
+    .map((r) => r.value);
+}
+
+/** Returns job IDs this provider has quoted — used by dashboard badge count. */
 export async function getQuotedJobIds(): Promise<string[]> {
-  const { data } = await api.get<{ quotedJobIds: string[] }>('/api/quotes');
-  return Array.isArray(data.quotedJobIds) ? data.quotedJobIds : [];
+  const { data } = await api.get<any>('/api/quotes');
+  if (Array.isArray(data)) return data.map((q: any) => q.jobId ?? '').filter(Boolean);
+  if (Array.isArray(data?.quotes)) return data.quotes.map((q: any) => q.jobId ?? '').filter(Boolean);
+  if (Array.isArray(data?.quotedJobIds)) return data.quotedJobIds;
+  return [];
 }
 
 export async function getQuote(id: string): Promise<Quote> {
   const { data } = await api.get<Record<string, any>>(`/api/quotes/${id}`);
-  return normaliseQuote(data);
+  // Handle both flat quote object and wrapped { quote: { ... } }
+  const raw = data?.quote ?? data;
+  return normaliseQuote(raw);
 }
 
 export async function submitQuote(payload: SubmitQuotePayload): Promise<Quote> {

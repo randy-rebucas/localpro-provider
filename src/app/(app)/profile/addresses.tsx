@@ -80,11 +80,9 @@ export default function AddressesScreen() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const [phoneSynced, setPhoneSynced] = useState(false);
-  if (me?.phone && !phoneSynced) {
-    setPhone(me.phone ?? '');
-    setPhoneSynced(true);
-  }
+  useEffect(() => {
+    if (me?.phone) setPhone(me.phone);
+  }, [me?.phone]);
 
   const addresses: Address[] = (me?.addresses ?? []) as Address[];
 
