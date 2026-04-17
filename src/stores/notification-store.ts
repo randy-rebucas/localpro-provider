@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 
-export interface AppNotification {
+/**
+ * In-memory representation of a push notification payload received at runtime.
+ * Distinct from the API's AppNotification (api/notifications.ts) which is the
+ * persisted notification feed fetched from the server.
+ */
+interface PushNotificationItem {
   id: string;
   type: string;
   title: string;
@@ -11,37 +16,40 @@ export interface AppNotification {
 }
 
 interface NotificationState {
-  notifications: AppNotification[];
+  /** Runtime push notifications received this session (not persisted). */
+  items: PushNotificationItem[];
+  /** Unread count synced from the API notification feed or incremented by push. */
   unreadCount: number;
-  add: (notification: AppNotification) => void;
-  setAll: (notifications: AppNotification[]) => void;
+  add: (item: PushNotificationItem) => void;
+  setAll: (items: PushNotificationItem[]) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
+  /** Sync the badge count directly from the API unreadCount response. */
+  setBadgeCount: (count: number) => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
-  notifications: [],
+  items: [],
   unreadCount: 0,
-  add: (notification) =>
+  add: (item) =>
     set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + (notification.isRead ? 0 : 1),
+      items: [item, ...state.items],
+      unreadCount: state.unreadCount + (item.isRead ? 0 : 1),
     })),
-  setAll: (notifications) =>
+  setAll: (items) =>
     set({
-      notifications,
-      unreadCount: notifications.filter((n) => !n.isRead).length,
+      items,
+      unreadCount: items.filter((n) => !n.isRead).length,
     }),
   markRead: (id) =>
     set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, isRead: true } : n,
-      ),
+      items: state.items.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       unreadCount: Math.max(0, state.unreadCount - 1),
     })),
   markAllRead: () =>
     set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+      items: state.items.map((n) => ({ ...n, isRead: true })),
       unreadCount: 0,
     })),
+  setBadgeCount: (count) => set({ unreadCount: count }),
 }));

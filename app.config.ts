@@ -17,9 +17,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   /* ── Splash screen ─────────────────────────────────────────── */
   splash: {
-    image: './assets/images/splash-icon.png',
+    image: './assets/logo.png',
     resizeMode: 'contain',
-    backgroundColor: '#208AEF',
+    backgroundColor: '#ffffff',
   },
 
   /* ── iOS ───────────────────────────────────────────────────── */
@@ -69,13 +69,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#208AEF',
-        image: './assets/images/splash-icon.png',
-        imageWidth: 76,
+        backgroundColor: '#ffffff',
+        image: './assets/logo.png',
+        imageWidth: 200,
         resizeMode: 'contain',
         android: {
-          image: './assets/images/splash-icon.png',
-          imageWidth: 76,
+          image: './assets/logo.png',
+          imageWidth: 200,
         },
       },
     ],

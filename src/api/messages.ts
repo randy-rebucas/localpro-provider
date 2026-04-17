@@ -75,9 +75,14 @@ function extractTimestamp(raw: RawMessage): string {
   return new Date().toISOString();
 }
 
+/** Deterministic fallback ID when the server omits one (avoids React key instability). */
+function stableId(prefix: string): string {
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export function normaliseMessage(raw: RawMessage, threadId: string): Message {
   return {
-    id: raw._id ?? raw.id ?? String(Math.random()),
+    id: raw._id ?? raw.id ?? stableId('msg'),
     threadId: raw.threadId ?? threadId,
     // Handles both plain-string IDs and populated user objects
     senderId: extractId(raw.senderId) || extractId(raw.sender),

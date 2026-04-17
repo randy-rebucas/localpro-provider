@@ -60,13 +60,20 @@ export async function getMyJobs(filters: JobsFilters = {}): Promise<Job[]> {
   return Array.isArray(data) ? data : (data as JobsResponse).data ?? [];
 }
 
-/** Returns the total count for a given status without fetching all records */
+/** Returns the total count for a given status. */
 export async function getMyJobsCount(status: string): Promise<number> {
+  // First try with limit:1 — paginated servers return `total` in metadata.
   const { data } = await api.get<JobsResponse | Job[]>('/api/jobs/mine', {
     params: { status, limit: 1 },
   });
-  if (Array.isArray(data)) return data.length;
-  return (data as JobsResponse).total ?? 0;
+  if (!Array.isArray(data)) {
+    // Paginated response: trust the total field
+    return (data as JobsResponse).total ?? (data as JobsResponse).data?.length ?? 0;
+  }
+  // Array-format server: limit:1 only gives us ≤1 item, not the real total.
+  // Re-fetch without a limit to count all matching records accurately.
+  const { data: all } = await api.get<Job[]>('/api/jobs/mine', { params: { status } });
+  return Array.isArray(all) ? all.length : 0;
 }
 
 export async function withdrawFromJob(id: string, reason: string): Promise<void> {

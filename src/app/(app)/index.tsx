@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -160,7 +161,9 @@ function AnnouncementBanner({ item }: { item: Announcement }) {
 export default function DashboardScreen() {
   const theme  = useTheme();
   const router = useRouter();
+  const qc     = useQueryClient();
   const user   = useAuthStore((s) => s.user);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey:  ['provider-profile'],
@@ -186,16 +189,23 @@ export default function DashboardScreen() {
     staleTime: 1000 * 60,
   });
 
-  const {
-    data: recentJobs,
-    isLoading: recentLoading,
-    refetch: refetchRecent,
-    isRefetching,
-  } = useQuery({
+  const { data: recentJobs, isLoading: recentLoading } = useQuery({
     queryKey:  ['my-jobs-recent'],
     queryFn:   () => getMyJobs({ limit: 5 }),
     staleTime: 1000 * 60,
   });
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await qc.invalidateQueries({ queryKey: ['wallet'] });
+    await qc.invalidateQueries({ queryKey: ['my-jobs-count'] });
+    await qc.invalidateQueries({ queryKey: ['quoted-job-ids'] });
+    await qc.invalidateQueries({ queryKey: ['my-jobs-recent'] });
+    await qc.invalidateQueries({ queryKey: ['consultations'] });
+    await qc.invalidateQueries({ queryKey: ['announcements'] });
+    await qc.invalidateQueries({ queryKey: ['provider-profile'] });
+    setIsRefreshing(false);
+  }, [qc]);
 
   const { data: announcements = [] } = useQuery({
     queryKey:  ['announcements'],
@@ -233,9 +243,10 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetchRecent}
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
             tintColor={Primary[500]}
+            colors={[Primary[500]]}
           />
         }
       >

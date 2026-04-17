@@ -1,11 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
+import { getUnreadCount } from '@/api/messages';
 import { Icon, type IconName } from '@/components/icon';
 import { Primary } from '@/constants/theme';
 import { ApprovalProvider } from '@/context/approval-context';
 import { ProfileCompletionProvider } from '@/context/profile-completion-context';
-import { useNotificationStore } from '@/stores/notification-store';
 
 /* ─────────────────────────────────────────────────────
    Dimensions
@@ -59,7 +60,12 @@ function TabIcon({
    Layout
 ───────────────────────────────────────────────────── */
 export default function AppLayout() {
-  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['messages-unread'],
+    queryFn: getUnreadCount,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 60, // poll every minute while app is open
+  });
 
   return (
     <ApprovalProvider>

@@ -11,7 +11,9 @@ import { useTheme } from '@/hooks/use-theme';
 export default function VerifyEmailScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { token } = useLocalSearchParams<{ token: string }>();
+  const params = useLocalSearchParams<{ token: string | string[] }>();
+  // Expo Router may pass query params as string[] when deep-linked; normalise to string
+  const token = Array.isArray(params.token) ? params.token[0] : params.token;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 

@@ -40,9 +40,13 @@ export interface Transaction {
   createdAt: string;
 }
 
+function stableId(): string {
+  return `txn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
 function normaliseTransaction(t: RawTransaction): Transaction {
   return {
-    id: t._id ?? t.id ?? String(Math.random()),
+    id: t._id ?? t.id ?? stableId(),
     type: t.type,
     description: t.description ?? t.type,
     amount: t.amount,

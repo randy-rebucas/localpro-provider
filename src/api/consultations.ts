@@ -11,6 +11,8 @@
  *   GET  /api/consultations/[id]           — single consultation
  *   GET  /api/consultations/[id]/messages  — fetch thread messages
  */
+import type { AxiosError } from 'axios';
+
 import { api } from './client';
 
 export interface Consultation {
@@ -52,17 +54,22 @@ export async function getConsultations(params?: {
   return (data as ListResponse).data ?? [];
 }
 
-/** Undocumented endpoint — falls back to list-then-filter if GET single returns 404/405 */
+/** Undocumented endpoint — falls back to list-then-filter only on 404/405 (endpoint missing).
+ *  Any other error (network failure, 500, etc.) is re-thrown so callers can show an error UI. */
 export async function getConsultation(id: string): Promise<Consultation> {
   try {
     const { data } = await api.get<Consultation>(`/api/consultations/${id}`);
     return data;
-  } catch {
-    // Fallback: fetch list and find by id
-    const list = await getConsultations();
-    const found = list.find((c) => c._id === id);
-    if (found) return found;
-    throw new Error('Consultation not found');
+  } catch (err) {
+    const status = (err as AxiosError)?.response?.status;
+    // Only fall back when the endpoint itself doesn't exist (undocumented)
+    if (status === 404 || status === 405) {
+      const list = await getConsultations();
+      const found = list.find((c) => c._id === id);
+      if (found) return found;
+      throw new Error('Consultation not found');
+    }
+    throw err;
   }
 }
 

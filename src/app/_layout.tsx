@@ -7,7 +7,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { getMe } from '@/api/auth';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
-import { APPROVAL_STATUS_KEY, useAuthStore } from '@/stores/auth-store';
+import { APPROVAL_STATUS_KEY, isProviderApproved, useAuthStore } from '@/stores/auth-store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,7 +47,8 @@ function AuthGuard() {
 
   const inAuth    = segments[0] === '(auth)';
   const onPending = segments[1] === 'pending-approval';
-  const approved  = user?.approvalStatus === 'approved';
+  // isProviderApproved checks both approvalStatus === 'approved' AND !isSuspended
+  const approved  = isProviderApproved(user);
 
   useEffect(() => {
     if (isLoading) return;
@@ -57,7 +58,7 @@ function AuthGuard() {
       return;
     }
 
-    // Not approved — keep inside auth group on the pending screen
+    // Not approved or suspended — keep inside auth group on the pending screen
     if (!approved) {
       if (!onPending) router.replace('/(auth)/pending-approval');
       return;

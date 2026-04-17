@@ -31,7 +31,9 @@ type FormData = z.infer<typeof schema>;
 export default function ResetPasswordScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { token } = useLocalSearchParams<{ token: string }>();
+  const params = useLocalSearchParams<{ token: string | string[] }>();
+  // Expo Router may pass query params as string[] when deep-linked; normalise to string
+  const token = Array.isArray(params.token) ? params.token[0] : params.token;
 
   const {
     control,

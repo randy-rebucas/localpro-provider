@@ -6,6 +6,10 @@ export interface AppNotification {
   message: string;
   read: boolean;
   createdAt: string;
+  /** Optional deep-link path sent by the backend (e.g. "/jobs/abc123") */
+  link?: string;
+  /** Arbitrary payload that may carry resource IDs for deep-linking */
+  data?: Record<string, unknown>;
 }
 
 interface NotificationsResponse {
