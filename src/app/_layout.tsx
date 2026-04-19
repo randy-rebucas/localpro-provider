@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Slot, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import * as SecureStore from 'expo-secure-store';
 
@@ -18,12 +19,19 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Same art as `app.config` splash; bundled so it updates without a native rebuild. */
+const SPLASH_SOURCE = require('@/assets/images/splash-icon.png');
+
 function AuthGuard() {
   const router = useRouter();
   const segments = useSegments();
   const { user, isLoading, setUser, clearUser } = useAuthStore();
 
   usePushNotifications();
+
+  useEffect(() => {
+    void SplashScreen.hideAsync();
+  }, []);
 
   useEffect(() => {
     async function bootstrap() {
@@ -72,8 +80,19 @@ function AuthGuard() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#208AEF" />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#ffffff',
+        }}
+      >
+        <Image
+          source={SPLASH_SOURCE}
+          style={{ width: 200, height: 200 }}
+          resizeMode="contain"
+        />
       </View>
     );
   }

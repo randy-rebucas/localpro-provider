@@ -6,25 +6,25 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   /* ── Identity ──────────────────────────────────────────────── */
   name: process.env.EXPO_PUBLIC_APP_NAME ?? 'LocalPro Provider',
   slug: 'localpro-provider',
-  version: '1.0.0',
+  version: '1.0.1',
   orientation: 'portrait',
   scheme: 'localproprovider',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   
   /* ── Icons ─────────────────────────────────────────────────── */
-  icon: './assets/images/icon.png',
+  icon: './assets/icon.png',
 
   /* ── Splash screen ─────────────────────────────────────────── */
   splash: {
-    image: './assets/logo.png',
+    image: './assets/images/splash-icon.png',
     resizeMode: 'contain',
     backgroundColor: '#ffffff',
   },
 
   /* ── iOS ───────────────────────────────────────────────────── */
   ios: {
-    icon: './assets/images/icon.png',
+    icon: './assets/icon.png',
     bundleIdentifier: 'asia.localpro.provider',
     supportsTablet: false,
     infoPlist: {
@@ -70,11 +70,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-splash-screen',
       {
         backgroundColor: '#ffffff',
-        image: './assets/logo.png',
+        image: './assets/images/splash-icon.png',
         imageWidth: 200,
         resizeMode: 'contain',
+        ios: {
+          image: './assets/images/splash-icon.png',
+          imageWidth: 200,
+        },
         android: {
-          image: './assets/logo.png',
+          image: './assets/images/splash-icon.png',
           imageWidth: 200,
         },
       },
